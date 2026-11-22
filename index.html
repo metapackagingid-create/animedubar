@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b0f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Animedubar" />
+  <title>Animedubar App — Streaming Anime &amp; Film Dub Arab</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian: '#0b0b0f',
+            card: '#14141a',
+            brand: '#E50914',
+            brandHover: '#f6121d',
+            vip: '#F59E0B'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            arabic: ['Cairo', 'sans-serif'],
+            display: ['Outfit', 'Inter', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { background:#0b0b0f; color:#f4f4f5; margin:0; padding:0; overflow-x:hidden; overscroll-behavior-y:contain; }
+    .no-scrollbar::-webkit-scrollbar { display:none; }
+    .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+    .vip-gradient { background: linear-gradient(135deg, #FDE047 0%, #F59E0B 50%, #D97706 100%); }
+    .safe-top { padding-top: max(env(safe-area-inset-top), 10px); }
+    .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 8px); }
+    .rank-stroke { font-family:'Outfit',sans-serif; font-weight:900; font-size:5.8rem; line-height:0.75; color:#0b0b0f; -webkit-text-stroke:2.5px rgba(255,255,255,0.48); user-select:none; }
+    @keyframes splashPulse { 0%{transform:scale(0.85);opacity:0} 45%{transform:scale(1.06);opacity:1} 100%{transform:scale(1);opacity:1} }
+    .splash-anim { animation: splashPulse 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
+  </style>
+</head>
+<body class="bg-obsidian text-zinc-100 min-h-screen select-none pb-20">
+
+  <!-- ============================================================
+       SPLASH SCREEN (NATIVE APP LAUNCH FEEL)
+       ============================================================ -->
+  <div id="appSplash" class="fixed inset-0 z-[200] bg-[#07070b] flex flex-col items-center justify-center gap-3 transition-opacity duration-500">
+    <div class="splash-anim flex flex-col items-center gap-3">
+      <div class="w-20 h-20 rounded-3xl bg-brand flex items-center justify-center shadow-2xl shadow-brand/50">
+        <svg class="w-11 h-11 text-white fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <h1 class="font-display font-black text-3xl tracking-widest text-white">ANIMEDUBAR</h1>
+      <p class="text-[11px] font-bold tracking-[0.22em] text-amber-400 uppercase">DUB ARAB · DUAL SUB ID/AR</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PROFILE PICKER ("SIAPA YANG MENONTON?" — NETFLIX MOBILE)
+       ============================================================ -->
+  <div id="profileGate" class="hidden fixed inset-0 z-[150] bg-[#0b0b0f] flex flex-col items-center justify-center p-6">
+    <div class="w-full max-w-sm text-center space-y-7">
+      <div class="flex items-center justify-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center"><svg class="w-4 h-4 text-white fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        <span class="font-display font-black text-2xl tracking-wider text-white">ANIMEDUBAR</span>
+      </div>
+      <h2 class="text-lg font-bold text-zinc-100">Siapa yang menonton?</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <button type="button" onclick="selectProfile('Utama', 'dual')" class="group flex flex-col items-center gap-2 focus:outline-none">
+          <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-brand to-red-900 border-2 border-white/15 group-active:scale-95 transition flex items-center justify-center text-3xl font-black text-white shadow-xl">A</div>
+          <span class="text-xs font-bold text-zinc-200">Utama (Dual Sub)</span>
+        </button>
+        <button type="button" onclick="selectProfile('Belajar Arab', 'ar')" class="group flex flex-col items-center gap-2 focus:outline-none">
+          <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-800 border-2 border-white/15 group-active:scale-95 transition flex items-center justify-center font-arabic text-3xl font-extrabold text-black shadow-xl">ع</div>
+          <span class="text-xs font-bold text-zinc-200">Belajar Arab</span>
+        </button>
+        <button type="button" onclick="selectProfile('Keluarga', 'id')" class="group flex flex-col items-center gap-2 focus:outline-none">
+          <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-900 border-2 border-white/15 group-active:scale-95 transition flex items-center justify-center text-3xl font-black text-white shadow-xl">K</div>
+          <span class="text-xs font-bold text-zinc-200">Keluarga (Sub ID)</span>
+        </button>
+        <button type="button" onclick="selectProfile('Anak', 'dual')" class="group flex flex-col items-center gap-2 focus:outline-none">
+          <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-900 border-2 border-white/15 group-active:scale-95 transition flex items-center justify-center text-xl font-black text-white shadow-xl">KIDS</div>
+          <span class="text-xs font-bold text-zinc-200">Mode Anak</span>
+        </button>
+      </div>
+      <p class="text-[11px] text-zinc-500">Pilih profil untuk menyesuaikan preferensi Dual Subtitle Anda.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TOP MOBILE APP BAR (NETFLIX MOBILE STYLE)
+       ============================================================ -->
+  <header id="mobileTopBar" class="fixed top-0 left-0 right-0 z-40 safe-top px-4 pb-2.5 bg-gradient-to-b from-[#0b0b0f] via-[#0b0b0f]/85 to-transparent backdrop-blur-md transition-all">
+    <div class="max-w-xl mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center shadow-lg shadow-brand/30">
+          <svg class="w-4 h-4 text-white fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <div class="leading-none">
+          <span id="topBarTitle" class="font-display font-black text-lg text-white tracking-tight">Untuk <span id="activeProfileLabel">Utama</span></span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="pwaInstallHeaderBtn" type="button" onclick="triggerPwaInstall()" class="hidden px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-extrabold shadow">Instal HP</button>
+        <button type="button" onclick="openVipSheet('voucher')" id="topVipPill" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-extrabold">★ VIP</button>
+        <button type="button" onclick="switchAppTab('search')" aria-label="Cari" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Netflix Mobile Category Pills (Only visible on Home tab) -->
+    <div id="homeFilterPills" class="max-w-xl mx-auto flex items-center gap-2 mt-2.5 overflow-x-auto no-scrollbar text-xs font-semibold">
+      <button type="button" data-pill="all" onclick="setHomePill('all')" class="hpill px-3.5 py-1.5 rounded-full bg-white text-black font-bold whitespace-nowrap">Semua</button>
+      <button type="button" data-pill="anime" onclick="setHomePill('anime')" class="hpill px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-zinc-200 whitespace-nowrap">Serial Anime</button>
+      <button type="button" data-pill="movie" onclick="setHomePill('movie')" class="hpill px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-zinc-200 whitespace-nowrap">Film Arab</button>
+      <button type="button" data-pill="vip" onclick="setHomePill('vip')" class="hpill px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-amber-300 whitespace-nowrap">★ VIP</button>
+      <button type="button" data-pill="free" onclick="setHomePill('free')" class="hpill px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-zinc-200 whitespace-nowrap">Gratis</button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MAIN APP SCREENS (4 NATIVE NETFLIX MOBILE TABS)
+       ============================================================ -->
+  <main class="max-w-xl mx-auto pt-28 px-3.5 space-y-6">
+
+    <!-- PWA Install Banner (Android/iOS) -->
+    <div id="pwaInstallBanner" class="hidden p-3.5 rounded-2xl bg-gradient-to-r from-brand/25 via-[#181826] to-amber-500/20 border border-white/15 flex items-center justify-between gap-3 text-xs">
+      <div class="min-w-0">
+        <p class="font-extrabold text-white">Pasang Aplikasi Animedubar di HP</p>
+        <p id="pwaInstallHint" class="text-[11px] text-zinc-300">Tampilan layar penuh seperti APK, lebih cepat &amp; ringan.</p>
+      </div>
+      <button type="button" onclick="triggerPwaInstall()" class="px-3.5 py-2 rounded-xl bg-brand text-white font-extrabold shrink-0">Instal</button>
+    </div>
+
+    <!-- SCREEN 1: BERANDA (NETFLIX MOBILE HOME) -->
+    <section id="tab-home" class="app-screen space-y-6">
+      <!-- Vertical Full-Bleed Billboard Card (Authentic Netflix Mobile Home) -->
+      <div id="mobileHeroCard" class="relative w-full aspect-[3/4] max-h-[520px] rounded-3xl overflow-hidden border border-white/15 shadow-2xl">
+        <!-- Injected by JS -->
+      </div>
+
+      <!-- Dynamic Horizontal Netflix Rows -->
+      <div id="mobileRowsContainer" class="space-y-6"></div>
+    </section>
+
+    <!-- SCREEN 2: BARU & POPULER (NEW & HOT) -->
+    <section id="tab-new" class="app-screen hidden space-y-5">
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
+        <button type="button" onclick="setNewSubTab('hot')" data-ntab="hot" class="ntab px-3.5 py-2 rounded-full bg-white text-black whitespace-nowrap">🔥 Populer Semua</button>
+        <button type="button" onclick="setNewSubTab('top10')" data-ntab="top10" class="ntab px-3.5 py-2 rounded-full bg-white/10 text-zinc-200 whitespace-nowrap">🏆 Top 10 Anime</button>
+        <button type="button" onclick="setNewSubTab('soon')" data-ntab="soon" class="ntab px-3.5 py-2 rounded-full bg-white/10 text-zinc-200 whitespace-nowrap">🍿 Segera Hadir</button>
+      </div>
+      <div id="newAndHotFeed" class="space-y-4"></div>
+    </section>
+
+    <!-- SCREEN 3: CARI (SEARCH) -->
+    <section id="tab-search" class="app-screen hidden space-y-4">
+      <div class="flex items-center gap-2.5 bg-[#181824] border border-white/15 rounded-2xl px-4 py-3">
+        <svg class="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+        <input id="appSearchInput" type="text" oninput="renderAppSearch(this.value)" placeholder="Cari anime, film, judul العربية, genre..." class="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none" />
+        <button type="button" onclick="document.getElementById('appSearchInput').value=''; renderAppSearch('');" class="text-xs text-zinc-400">Hapus</button>
+      </div>
+      <h3 id="searchListHeading" class="text-sm font-extrabold text-white">Pencarian Terpopuler</h3>
+      <div id="appSearchResults" class="space-y-2.5"></div>
+    </section>
+
+    <!-- SCREEN 4: ANIMEDUBAR SAYA (MY NETFLIX PROFILE & ACCOUNT) -->
+    <section id="tab-profile" class="app-screen hidden space-y-5">
+      <!-- Profile Identity Card -->
+      <div class="p-4 rounded-3xl bg-[#14141e] border border-white/10 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3.5 min-w-0">
+          <div class="w-14 h-14 rounded-2xl bg-brand flex items-center justify-center text-2xl font-black text-white shrink-0">A</div>
+          <div class="min-w-0">
+            <h2 id="myProfileName" class="text-base font-black text-white truncate">Pengguna Utama</h2>
+            <p id="myProfileTierBadge" class="text-xs font-bold text-zinc-400">Mode Gratis · Klik VIP untuk Upgrade</p>
+          </div>
+        </div>
+        <button type="button" onclick="document.getElementById('profileGate').classList.remove('hidden')" class="px-3 py-1.5 rounded-xl bg-white/10 text-[11px] font-bold text-zinc-200 shrink-0">Ganti Profil</button>
+      </div>
+
+      <!-- Quick Action Grid -->
+      <div class="grid grid-cols-2 gap-2.5 text-xs font-bold">
+        <button type="button" onclick="openVipSheet('voucher')" class="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/35 text-amber-300 text-left space-y-1">
+          <span class="text-base block">🎟️</span>
+          <span>Aktivasi Voucher VIP</span>
+        </button>
+        <button type="button" onclick="openVipSheet('plans')" class="p-3.5 rounded-2xl vip-gradient text-black text-left space-y-1 font-extrabold">
+          <span class="text-base block">★</span>
+          <span>Langganan VIP / WA</span>
+        </button>
+        <button type="button" onclick="openAuthSheet()" class="p-3.5 rounded-2xl bg-[#161622] border border-white/10 text-white text-left space-y-1">
+          <span class="text-base block">👤</span>
+          <span id="profileAuthBtnLabel">Login / Daftar Akun</span>
+        </button>
+        <button type="button" onclick="triggerPwaInstall()" class="p-3.5 rounded-2xl bg-emerald-600/20 border border-emerald-500/35 text-emerald-300 text-left space-y-1">
+          <span class="text-base block">📲</span>
+          <span>Instal Aplikasi di HP</span>
+        </button>
+      </div>
+
+      <!-- Daftar Saya -->
+      <div class="space-y-2.5">
+        <h3 class="text-sm font-extrabold text-white">Daftar Tontonan Saya</h3>
+        <div id="myProfileListRow" class="flex gap-3 overflow-x-auto no-scrollbar pb-1"></div>
+      </div>
+
+      <!-- Pengaturan Server Backend Google Apps Script -->
+      <div class="p-4 rounded-2xl bg-[#14141e] border border-white/10 space-y-3 text-xs">
+        <div class="flex items-center justify-between">
+          <h4 class="font-extrabold text-white">Sinkronisasi Server Animedubar</h4>
+          <span id="appSyncBadge" class="px-2 py-0.5 rounded-full bg-zinc-700 text-[10px] font-bold text-zinc-200">Lokal</span>
+        </div>
+        <input id="appGasUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-[#0c0c13] border border-white/10 rounded-xl px-3 py-2 text-emerald-300 font-mono text-[11px]" />
+        <div class="flex gap-2">
+          <button type="button" onclick="saveAppBackendUrl()" class="flex-1 py-2 rounded-xl bg-brand text-white font-bold">Simpan &amp; Sinkronkan</button>
+          <button type="button" onclick="openWhatsAppAdmin('Halo Admin Animedubar, saya butuh bantuan aplikasi HP.')" class="px-3.5 py-2 rounded-xl bg-emerald-600/25 text-emerald-300 font-bold">Chat WA</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       BOTTOM NAVIGATION BAR (4 AUTHENTIC NETFLIX MOBILE TABS)
+       ============================================================ -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d14]/95 backdrop-blur-xl border-t border-white/10 safe-bottom">
+    <div class="max-w-xl mx-auto grid grid-cols-4 pt-2 pb-1 text-[10px] font-semibold">
+      <button type="button" data-btab="home" onclick="switchAppTab('home')" class="btab flex flex-col items-center gap-0.5 text-white">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Beranda</span>
+      </button>
+      <button type="button" data-btab="new" onclick="switchAppTab('new')" class="btab flex flex-col items-center gap-0.5 text-zinc-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3V9z"/></svg>
+        <span>Baru &amp; Populer</span>
+      </button>
+      <button type="button" data-btab="search" onclick="switchAppTab('search')" class="btab flex flex-col items-center gap-0.5 text-zinc-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+        <span>Cari</span>
+      </button>
+      <button type="button" data-btab="profile" onclick="switchAppTab('profile')" class="btab flex flex-col items-center gap-0.5 text-zinc-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Saya</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       BOTTOM SHEET: DETAIL KONTEN & EPISODE (NETFLIX MOBILE)
+       ============================================================ -->
+  <div id="detailSheet" class="hidden fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center" onclick="if(event.target===this) closeOverlay('detailSheet')">
+    <div class="w-full max-w-xl bg-[#12121a] rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/15 max-h-[92vh] overflow-y-auto no-scrollbar">
+      <div id="detailSheetBody"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       FULLSCREEN MOBILE PLAYER (GDRIVE + HLS PRO + DUAL SUBTITLE)
+       ============================================================ -->
+  <div id="playerSheet" class="hidden fixed inset-0 z-[90] bg-black flex flex-col">
+    <div class="safe-top px-3.5 py-2.5 bg-[#12121a] border-b border-white/10 flex items-center justify-between gap-2">
+      <div class="min-w-0">
+        <h3 id="plTitle" class="text-xs font-extrabold text-white truncate">Memutar</h3>
+        <p id="plSub" class="text-[10px] text-zinc-400 truncate"></p>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button type="button" onclick="togglePlayerMode()" id="plModeBtn" class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold">HLS Dual Sub</button>
+        <button type="button" onclick="closePlayer()" class="w-8 h-8 rounded-full bg-white/10 text-white font-bold">✕</button>
+      </div>
+    </div>
+
+    <!-- Video Stage -->
+    <div id="plStage" class="relative w-full aspect-video bg-black shrink-0 overflow-hidden">
+      <!-- Real Google Drive Preview -->
+      <div id="plGdriveWrap" class="hidden absolute inset-0"><iframe id="plIframe" src="" class="w-full h-full border-0" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
+
+      <!-- HLS + Dual Sub Stage -->
+      <div id="plHlsWrap" class="hidden absolute inset-0 bg-black">
+        <video id="plVideo" class="w-full h-full object-contain" playsinline controls></video>
+        <div id="plDualSubBox" class="pointer-events-none absolute left-2 right-2 bottom-12 flex flex-col items-center gap-1 text-center">
+          <div id="plSubAr" dir="rtl" class="font-arabic font-bold text-sm sm:text-base text-amber-300 bg-black/80 px-2.5 py-0.5 rounded"></div>
+          <div id="plSubId" class="font-sans font-semibold text-xs sm:text-sm text-white bg-black/80 px-2.5 py-0.5 rounded"></div>
+        </div>
+      </div>
+
+      <!-- Interactive Demo Dual Sub Stage -->
+      <div id="plDemoWrap" class="hidden absolute inset-0 flex flex-col justify-between p-3">
+        <div id="plDemoBg" class="absolute inset-0 opacity-60"></div>
+        <div class="relative z-10 flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-black/75 border border-amber-400/40 text-amber-300 text-[10px] font-bold">DUB ARAB HD · DUAL SUB</span>
+          <select id="plSubModeSel" onchange="app.subMode=this.value; renderDemoSubs();" class="bg-black/80 border border-white/20 rounded-lg px-2 py-1 text-[10px] font-bold text-white">
+            <option value="dual">Dual (ID + AR)</option>
+            <option value="id">Sub Indo</option>
+            <option value="ar">Sub Arab</option>
+            <option value="off">Sub Mati</option>
+          </select>
+        </div>
+        <div class="relative z-10 flex justify-center">
+          <button type="button" onclick="toggleDemoPlay()" id="plDemoPlayBtn" class="w-14 h-14 rounded-full bg-brand text-white flex items-center justify-center shadow-2xl"><svg class="w-7 h-7 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+        </div>
+        <div class="relative z-10 space-y-2">
+          <div id="plDemoSubLines" class="flex flex-col items-center gap-1 text-center"></div>
+          <input id="plDemoRange" type="range" min="0" max="100" value="15" oninput="app.demoPct=Number(this.value); renderDemoSubs();" class="w-full accent-[#E50914]" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Server Switcher & Episode List -->
+    <div class="flex-1 overflow-y-auto p-3.5 space-y-4 bg-[#0e0e15]">
+      <div class="flex flex-wrap gap-2 items-center justify-between">
+        <div id="plServers" class="flex flex-wrap gap-1.5"></div>
+        <button type="button" onclick="playNextEp()" class="px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-bold">Eps Berikutnya →</button>
+      </div>
+      <div class="space-y-2">
+        <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-400">Daftar Episode</h4>
+        <div id="plEpisodeList" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       VIP & VOUCHER SHEET
+       ============================================================ -->
+  <div id="vipSheet" class="hidden fixed inset-0 z-[85] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center" onclick="if(event.target===this) closeOverlay('vipSheet')">
+    <div class="w-full max-w-xl bg-[#12121a] rounded-t-3xl sm:rounded-3xl border-t sm:border border-amber-500/35 p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-black text-amber-400 uppercase tracking-widest">ANIMEDUBAR VIP</span>
+          <h3 class="text-lg font-black text-white">Buka Akses Penuh HD</h3>
+        </div>
+        <button type="button" onclick="closeOverlay('vipSheet')" class="w-8 h-8 rounded-full bg-white/10 text-white font-bold">✕</button>
+      </div>
+      <p id="vipLockReason" class="hidden p-2.5 rounded-xl bg-red-500/15 border border-red-500/35 text-xs text-red-200"></p>
+      <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+        <button type="button" onclick="switchVipTab('plans')" id="vtabPlans" class="py-2 rounded-xl bg-amber-500 text-black">Paket Langganan</button>
+        <button type="button" onclick="switchVipTab('voucher')" id="vtabVoucher" class="py-2 rounded-xl bg-white/10 text-zinc-200">Login Voucher VIP</button>
+      </div>
+      <div id="vipPanePlans" class="space-y-3">
+        <div id="vipPlansList" class="space-y-2"></div>
+        <button type="button" onclick="orderSelectedPlanWa()" class="w-full py-3.5 rounded-2xl vip-gradient text-black font-extrabold text-sm shadow-lg">Langganan via WhatsApp Admin</button>
+      </div>
+      <div id="vipPaneVoucher" class="hidden space-y-3">
+        <div id="activeVoucherBox" class="hidden p-4 rounded-2xl bg-emerald-950/50 border border-emerald-500/40 space-y-2 text-xs">
+          <p class="font-extrabold text-emerald-300">✔ VIP VOUCHER AKTIF</p>
+          <p id="activeVoucherDetail" class="text-white font-bold"></p>
+          <button type="button" onclick="logoutVoucher()" class="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-200 font-bold">Keluar Voucher</button>
+        </div>
+        <form id="voucherForm" onsubmit="redeemVoucher(event)" class="space-y-2.5">
+          <input id="voucherInp" type="text" required placeholder="Masukkan Kode Voucher (cth: DEMO-VIP7)" oninput="this.value=this.value.toUpperCase()" class="w-full bg-[#191926] border border-white/15 rounded-xl px-3.5 py-3 font-mono font-bold text-amber-300 uppercase text-sm" />
+          <button type="submit" class="w-full py-3 rounded-2xl vip-gradient text-black font-extrabold text-sm">Aktifkan Kode Voucher</button>
+          <p class="text-[11px] text-zinc-400">Kode demo uji coba: <button type="button" onclick="document.getElementById('voucherInp').value='DEMO-VIP7'" class="text-amber-300 font-mono underline">DEMO-VIP7</button></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       AUTH SHEET (CONNECTED TO APPS SCRIPT BACKEND)
+       ============================================================ -->
+  <div id="authSheet" class="hidden fixed inset-0 z-[85] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center" onclick="if(event.target===this) closeOverlay('authSheet')">
+    <div class="w-full max-w-xl bg-[#12121a] rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/15 p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-black text-white">Akun Member Animedubar</h3>
+        <button type="button" onclick="closeOverlay('authSheet')" class="w-8 h-8 rounded-full bg-white/10 text-white font-bold">✕</button>
+      </div>
+      <form onsubmit="submitAppLogin(event)" class="space-y-3 text-xs">
+        <input id="authEmail" type="email" required placeholder="Email Member" class="w-full bg-[#191926] border border-white/15 rounded-xl px-3.5 py-3 text-white" />
+        <input id="authPass" type="password" required placeholder="Password" class="w-full bg-[#191926] border border-white/15 rounded-xl px-3.5 py-3 text-white" />
+        <button type="submit" class="w-full py-3 rounded-2xl bg-brand text-white font-extrabold text-sm">Masuk Akun</button>
+      </form>
+      <p class="text-[11px] text-zinc-400 text-center">Belum punya akun VIP? <button type="button" onclick="closeOverlay('authSheet'); openVipSheet('plans');" class="text-amber-400 font-bold underline">Chat Admin WhatsApp</button></p>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toastBox" class="fixed top-16 left-1/2 -translate-x-1/2 z-[180] w-[92%] max-w-sm space-y-2 pointer-events-none"></div>
+
+  <script>
+    /* =========================================================================
+       KONFIGURASI DEFAULT APLIKASI PELANGGAN (TERHUBUNG KE APPS SCRIPT BACKEND)
+       Tempel URL Web App Google Apps Script Anda di BACKEND_WEB_APP_URL
+       ========================================================================= */
+    const DEFAULT_APP_CONFIG = {
+      brandName: "Animedubar",
+      whatsappNumber: "6283165545379",
+      backendWebAppUrl: "https://script.google.com/macros/s/AKfycbwq1uGFoQqvssAeOHsiJyI8vk9CWWzTfXPdK0MDJWHKv33FrHkDwUgid4UF6EKkHI-S/exec",
+      vouchers: [
+        { code: "DEMO-VIP7", planName: "VIP Trial 7 Hari", durationDays: 7, status: "ACTIVE" },
+        { code: "ANIMEDUBAR-VIP30", planName: "VIP Bulanan 30 Hari", durationDays: 30, status: "ACTIVE" },
+        { code: "ARAB-PRO365", planName: "VIP Tahunan 365 Hari", durationDays: 365, status: "ACTIVE" }
+      ],
+      vipPlans: [
+        { id: "monthly", name: "VIP Bulanan", duration: "30 Hari", price: "Rp 29.000", note: "Akses penuh 1 bulan" },
+        { id: "quarterly", name: "VIP 3 Bulan", duration: "90 Hari", price: "Rp 75.000", note: "Terlaris · Hemat 15%", popular: true },
+        { id: "yearly", name: "VIP Tahunan", duration: "365 Hari", price: "Rp 249.000", note: "Hemat 30% · Prioritas Request" }
+      ],
+      catalog: [
+        { id:"conan-ar", title:"Detective Conan (Dub Arab)", arabicTitle:"المحقق كونان - مدبلج عربي", type:"anime", year:2025, rating:"9.4", quality:"HD 1080p", featured:true, topRank:1, isVip:false, genres:["Misteri","Detektif","Dub Arab"], theme:{c1:"#1d4ed8",c2:"#0f172a",accent:"#ef4444"}, synopsis:"Shinichi Kudo berubah menjadi anak kecil akibat racun organisasi hitam. Dubbing Bahasa Arab klasik jernih dengan Dual Subtitle Indonesia & Arab.", seasons:[{seasonNumber:1,title:"Season 1",episodes:[{ep:1,title:"Kasus Roller Coaster",duration:"24 mnt",isVip:false,driveSubId:"DEMO_CONAN_EP1_ID",driveSubAr:"DEMO_CONAN_EP1_AR",driveDual:"DEMO_CONAN_EP1_DUAL"},{ep:2,title:"Putri Presiden yang Hilang",duration:"24 mnt",isVip:false,driveSubId:"DEMO_CONAN_EP2_ID",driveSubAr:"DEMO_CONAN_EP2_AR",driveDual:"DEMO_CONAN_EP2_DUAL"},{ep:3,title:"Rahasia Ruang Terkunci",duration:"24 mnt",isVip:true,driveSubId:"DEMO_CONAN_EP3_ID",driveSubAr:"DEMO_CONAN_EP3_AR",driveDual:"DEMO_CONAN_EP3_DUAL"}]}] },
+        { id:"the-journey-ar", title:"The Journey: Pasukan Gajah", arabicTitle:"الرحلة - فيلم أنمي عربي", type:"movie", year:2024, rating:"9.2", quality:"4K HDR", featured:true, topRank:2, isVip:true, genres:["Sejarah","Epik","Film Arab"], theme:{c1:"#b45309",c2:"#1c1208",accent:"#f59e0b"}, synopsis:"Film anime kolaborasi Manga Productions (Arab Saudi) & Toei Animation tentang keberanian penduduk Makkah mempertahankan kota suci.", seasons:[{seasonNumber:1,title:"Full Movie",episodes:[{ep:1,title:"The Journey Full Movie HD",duration:"1 jam 50 mnt",isVip:true,driveSubId:"DEMO_JOURNEY_ID",driveSubAr:"DEMO_JOURNEY_AR",driveDual:"DEMO_JOURNEY_DUAL"}]}] },
+        { id:"hxh-ar", title:"Hunter x Hunter (Al-Qannas)", arabicTitle:"القناص - مدبلج بالعربية", type:"anime", year:2025, rating:"9.5", quality:"HD 1080p", featured:true, topRank:3, isVip:false, genres:["Aksi","Petualangan","Fantasi"], theme:{c1:"#047857",c2:"#091914",accent:"#34d399"}, synopsis:"Perjalanan Gon Freecss mengikuti Ujian Hunter dalam versi Al-Qannas dengan dubbing Arab fusha terbaik.", seasons:[{seasonNumber:1,title:"Season 1",episodes:[{ep:1,title:"Keberangkatan dan Sahabat Baru",duration:"24 mnt",isVip:false,driveSubId:"DEMO_HXH_EP1_ID",driveSubAr:"DEMO_HXH_EP1_AR",driveDual:"DEMO_HXH_EP1_DUAL"},{ep:2,title:"Ujian di Hutan Kabut",duration:"24 mnt",isVip:true,driveSubId:"DEMO_HXH_EP2_ID",driveSubAr:"DEMO_HXH_EP2_AR",driveDual:"DEMO_HXH_EP2_DUAL"}]}] },
+        { id:"bilal-movie-ar", title:"Bilal: A New Breed of Hero", arabicTitle:"بلال - فيلم أنيميشن عربي", type:"movie", year:2024, rating:"9.3", quality:"HD 1080p", featured:false, topRank:4, isVip:false, genres:["Biografi","Sejarah","Keluarga"], theme:{c1:"#92400e",c2:"#140e07",accent:"#fbbf24"}, synopsis:"Kisah inspiratif Bilal bin Rabah memperjuangkan kebebasan dan keadilan dengan Dual Subtitle ID & AR.", seasons:[{seasonNumber:1,title:"Full Movie",episodes:[{ep:1,title:"Bilal Full Movie",duration:"1 jam 45 mnt",isVip:false,driveSubId:"DEMO_BILAL_ID",driveSubAr:"DEMO_BILAL_AR",driveDual:"DEMO_BILAL_DUAL"}]}] },
+        { id:"demon-slayer-ar", title:"Kimetsu no Yaiba (Dub Arab)", arabicTitle:"قاتل الشياطين - مدبلج", type:"anime", year:2026, rating:"9.4", quality:"4K HDR", featured:false, topRank:5, isVip:true, genres:["Aksi","Pedang","Fantasi"], theme:{c1:"#be123c",c2:"#18080e",accent:"#fb7185"}, synopsis:"Tanjiro Kamado membasmi iblis demi menyelamatkan adiknya Nezuko dengan audio dubbing Bahasa Arab kualitas studio.", seasons:[{seasonNumber:1,title:"Season 1",episodes:[{ep:1,title:"Kekejaman di Gunung Salju",duration:"24 mnt",isVip:true,driveSubId:"DEMO_KNY_EP1_ID",driveSubAr:"DEMO_KNY_EP1_AR",driveDual:"DEMO_KNY_EP1_DUAL"}]}] },
+        { id:"aot-ar", title:"Attack on Titan (Dub Arab)", arabicTitle:"هجوم العمالقة - مدبلج عربي", type:"anime", year:2025, rating:"9.6", quality:"HD 1080p", featured:false, topRank:6, isVip:true, genres:["Aksi","Drama","Thriller"], theme:{c1:"#7f1d1d",c2:"#111014",accent:"#ef4444"}, synopsis:"Kisah epik Eren Yeager mempertahankan umat manusia di balik tembok raksasa dengan dubbing Arab penuh penghayatan.", seasons:[{seasonNumber:1,title:"Season 1",episodes:[{ep:1,title:"Untukmu 2000 Tahun Lagi",duration:"25 mnt",isVip:true,driveSubId:"DEMO_AOT_EP1_ID",driveSubAr:"DEMO_AOT_EP1_AR",driveDual:"DEMO_AOT_EP1_DUAL"}]}] }
+      ]
+    };
+
+    const DEMO_SUBS = [
+      { ar:"مرحباً بكم في تطبيق أنمي دوبار — دبلجة عربية عالية الدقة", id:"Selamat datang di Aplikasi Animedubar — Dubbing Arab HD" },
+      { ar:"الحقيقة دائماً واحدة مهما كانت الألغاز معقدة!", id:"Kebenaran selalu hanya satu, serumit apa pun misterinya!" },
+      { ar:"استمتع بالترجمة المزدوجة العربية والإندونيسية على هاتفك!", id:"Nikmati Dual Subtitle Arab & Indonesia langsung di HP Anda!" }
+    ];
+
+    const lsGet = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+    const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    const app = {
+      config: lsGet('adbr_mob_cfg_v5', DEFAULT_APP_CONFIG),
+      profile: lsGet('adbr_mob_prof_v5', { name:'Utama', subMode:'dual' }),
+      tab: 'home',
+      homePill: 'all',
+      newTab: 'hot',
+      myList: lsGet('adbr_mob_list_v5', ['conan-ar', 'the-journey-ar']),
+      continueList: lsGet('adbr_mob_cw_v5', [{ itemId:'conan-ar', sIdx:0, eIdx:0, pct:58 }]),
+      voucher: lsGet('adbr_mob_voucher_v5', null),
+      member: lsGet('adbr_mob_member_v5', null),
+      selectedPlanId: 'quarterly',
+      deferredInstall: null,
+      player: { itemId:null, sIdx:0, eIdx:0, server:'driveSubId', mode:'auto', hls:null },
+      subMode: 'dual',
+      demoPct: 15,
+      demoPlaying: true,
+      demoTimer: null
+    };
+
+    function hasVip() {
+      const vOk = app.voucher && app.voucher.expiresAt && Date.now() < Number(app.voucher.expiresAt);
+      const mOk = app.member && app.member.isVipActive;
+      return Boolean(vOk || mOk);
+    }
+
+    function toast(msg, type='info') {
+      const box = document.getElementById('toastBox');
+      const cls = type === 'vip' ? 'bg-amber-500 text-black font-extrabold' : type === 'error' ? 'bg-red-600 text-white font-bold' : 'bg-[#1b1b28] border border-white/15 text-white font-semibold';
+      const el = document.createElement('div');
+      el.className = `px-4 py-2.5 rounded-2xl text-xs shadow-2xl text-center ${cls}`;
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => el.remove(), 3200);
+    }
+
+    function artHtml(item) {
+      const t = item.theme || { c1:'#1d4ed8', c2:'#0f172a', accent:'#ef4444' };
+      const img = item.posterUrl ? `<img src="${esc(item.posterUrl)}" alt="${esc(item.title)}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" loading="lazy"/>` : '';
+      return `<div class="relative w-full h-full" style="background:linear-gradient(155deg,${t.c1} 0%,${t.c2} 100%);"><div class="absolute -top-8 -right-8 w-36 h-36 rounded-full opacity-20" style="background:${t.accent}"></div>${img}</div>`;
+    }
+
+    function extractDriveId(str) {
+      const s = String(str || '').trim();
+      if (!s || /^DEMO_/i.test(s)) return s;
+      const m = s.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/) || s.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+      return m ? m[1] : s;
+    }
+
+    /* ----- PWA INSTALL HANDLER (ANDROID CHROME + iOS SAFARI) ----- */
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      app.deferredInstall = e;
+      document.getElementById('pwaInstallBanner').classList.remove('hidden');
+      document.getElementById('pwaInstallHeaderBtn').classList.remove('hidden');
+    });
+
+    async function triggerPwaInstall() {
+      if (app.deferredInstall) {
+        app.deferredInstall.prompt();
+        const choice = await app.deferredInstall.userChoice;
+        if (choice.outcome === 'accepted') {
+          toast('Animedubar berhasil diinstal ke layar utama HP!', 'vip');
+          document.getElementById('pwaInstallBanner').classList.add('hidden');
+          document.getElementById('pwaInstallHeaderBtn').classList.add('hidden');
+        }
+        app.deferredInstall = null;
+        return;
+      }
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        toast('Di iPhone/Safari: ketuk ikon Bagikan (Share) → "Tambahkan ke Layar Utama".', 'info');
+      } else {
+        toast('Buka menu browser (⋮) di pojok kanan atas → pilih "Instal Aplikasi" / "Tambahkan ke Layar Utama".', 'info');
+      }
+    }
+
+    /* ----- PROFILE & NAVIGATION ----- */
+    function selectProfile(name, subMode) {
+      app.profile = { name, subMode };
+      app.subMode = subMode;
+      lsSet('adbr_mob_prof_v5', app.profile);
+      document.getElementById('profileGate').classList.add('hidden');
+      renderAll();
+    }
+
+    function switchAppTab(tab) {
+      app.tab = tab;
+      document.querySelectorAll('.app-screen').forEach(s => s.classList.add('hidden'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      document.getElementById('homeFilterPills').classList.toggle('hidden', tab !== 'home');
+      document.querySelectorAll('.btab').forEach(b => {
+        const active = b.getAttribute('data-btab') === tab;
+        b.className = active ? 'btab flex flex-col items-center gap-0.5 text-white' : 'btab flex flex-col items-center gap-0.5 text-zinc-500';
+      });
+      if (tab === 'new') renderNewAndHot();
+      if (tab === 'search') renderAppSearch(document.getElementById('appSearchInput').value);
+      if (tab === 'profile') renderProfileScreen();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setHomePill(key) {
+      app.homePill = key;
+      document.querySelectorAll('.hpill').forEach(p => {
+        const active = p.getAttribute('data-pill') === key;
+        p.className = active
+          ? 'hpill px-3.5 py-1.5 rounded-full bg-white text-black font-bold whitespace-nowrap'
+          : 'hpill px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-zinc-200 whitespace-nowrap';
+      });
+      renderHome();
+    }
+
+    /* ----- RENDER HOME (100% NETFLIX MOBILE LAYOUT) ----- */
+    function renderHome() {
+      const cat = app.config.catalog || [];
+      let list = cat;
+      if (app.homePill === 'anime') list = cat.filter(i => i.type === 'anime');
+      if (app.homePill === 'movie') list = cat.filter(i => i.type === 'movie');
+      if (app.homePill === 'vip') list = cat.filter(i => i.isVip);
+      if (app.homePill === 'free') list = cat.filter(i => !i.isVip);
+
+      const hero = list.find(i => i.featured) || list[0] || cat[0];
+      if (hero) {
+        const inList = app.myList.includes(hero.id);
+        document.getElementById('mobileHeroCard').innerHTML = `
+          ${artHtml(hero)}
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/10"></div>
+          <div class="absolute top-3.5 left-3.5 right-3.5 flex justify-between items-center">
+            <span class="px-2.5 py-1 rounded-lg bg-brand text-white text-[10px] font-black tracking-wider">DUB ARAB</span>
+            <span class="px-2.5 py-1 rounded-lg ${hero.isVip ? 'vip-gradient text-black' : 'bg-emerald-500 text-black'} text-[10px] font-black">${hero.isVip ? '★ VIP' : 'GRATIS'}</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 p-4 text-center space-y-2.5">
+            <p dir="rtl" class="font-arabic text-lg font-bold text-amber-300 drop-shadow">${esc(hero.arabicTitle)}</p>
+            <h2 class="font-display font-black text-2xl text-white leading-tight drop-shadow">${esc(hero.title)}</h2>
+            <p class="text-[11px] text-zinc-200 font-medium">${esc((hero.genres || []).join(' • '))} • SUB ID &amp; AR</p>
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+              <button type="button" onclick="openPlayer('${esc(hero.id)}',0,0)" class="py-2.5 rounded-xl bg-white active:scale-95 text-black font-extrabold text-sm flex items-center justify-center gap-1.5 shadow-xl">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Putar</span>
+              </button>
+              <button type="button" onclick="toggleMyList('${esc(hero.id)}')" class="py-2.5 rounded-xl bg-white/15 active:scale-95 backdrop-blur-md border border-white/20 text-white font-bold text-sm">
+                ${inList ? '✔ Daftar Saya' : '+ Daftar Saya'}
+              </button>
+            </div>
+          </div>`;
+      }
+
+      const rows = [];
+      // 1. Continue Watching
+      const cwItems = app.continueList.map(c => ({ c, item: cat.find(i => i.id === c.itemId) })).filter(x => x.item);
+      if (cwItems.length && app.homePill === 'all') {
+        rows.push(`
+          <div class="space-y-2.5">
+            <h3 class="text-sm font-extrabold text-white">Lanjutkan Menonton untuk ${esc(app.profile.name)}</h3>
+            <div class="flex gap-3 overflow-x-auto no-scrollbar">
+              ${cwItems.map(({c, item}) => `
+                <div onclick="openPlayer('${esc(item.id)}',${c.sIdx||0},${c.eIdx||0})" class="shrink-0 w-36 rounded-2xl bg-card border border-white/10 overflow-hidden active:scale-95 transition">
+                  <div class="relative aspect-[2/3]">
+                    ${artHtml(item)}
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center"><div class="w-10 h-10 rounded-full bg-black/75 border-2 border-white flex items-center justify-center text-white"><svg class="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/25"><div class="h-full bg-brand" style="width:${c.pct||35}%"></div></div>
+                  </div>
+                  <div class="p-2 flex items-center justify-between text-[10px] text-zinc-300"><span class="truncate font-bold">${esc(item.title)}</span><button type="button" onclick="event.stopPropagation(); openDetail('${esc(item.id)}')" class="px-1">ⓘ</button></div>
+                </div>`).join('')}
+            </div>
+          </div>`);
+      }
+
+      // 2. Top 10 Row
+      const top10 = list.filter(i => i.topRank).sort((a,b) => a.topRank - b.topRank);
+      if (top10.length) {
+        rows.push(`
+          <div class="space-y-2">
+            <h3 class="text-sm font-extrabold text-white">Top 10 di Animedubar Hari Ini</h3>
+            <div class="flex gap-2 overflow-x-auto no-scrollbar py-1">
+              ${top10.map((it, idx) => `
+                <div onclick="openDetail('${esc(it.id)}')" class="shrink-0 flex items-end w-36 active:scale-95 transition">
+                  <span class="rank-stroke -mr-3.5 z-0">${idx+1}</span>
+                  <div class="relative z-10 w-24 aspect-[2/3] rounded-xl overflow-hidden border border-white/10 shadow-xl shrink-0">
+                    ${artHtml(it)}
+                    <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black ${it.isVip ? 'vip-gradient text-black' : 'bg-emerald-500 text-black'}">${it.isVip ? 'VIP' : 'FREE'}</span>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`);
+      }
+
+      const cardRow = (title, ar, arr) => !arr.length ? '' : `
+        <div class="space-y-2">
+          <div class="flex items-baseline justify-between"><h3 class="text-sm font-extrabold text-white">${title}</h3><span dir="rtl" class="font-arabic text-[11px] text-zinc-400">${ar}</span></div>
+          <div class="flex gap-2.5 overflow-x-auto no-scrollbar">
+            ${arr.map(it => `
+              <div onclick="openDetail('${esc(it.id)}')" class="shrink-0 w-28 rounded-xl bg-card border border-white/10 overflow-hidden active:scale-95 transition">
+                <div class="relative aspect-[2/3]">
+                  ${artHtml(it)}
+                  <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black ${it.isVip ? 'vip-gradient text-black' : 'bg-emerald-500 text-black'}">${it.isVip ? 'VIP' : 'GRATIS'}</span>
+                </div>
+                <div class="p-1.5"><p class="text-[11px] font-bold text-white truncate">${esc(it.title)}</p><p dir="rtl" class="font-arabic text-[9px] text-amber-300 truncate">${esc(it.arabicTitle)}</p></div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+
+      rows.push(cardRow('Anime Dubbing Arab Populer', 'أنمي مدبلج', list.filter(i => i.type === 'anime')));
+      rows.push(cardRow('Film & Movie Bahasa Arab', 'أفلام عربية', list.filter(i => i.type === 'movie')));
+      rows.push(cardRow('Eksklusif Dual Subtitle VIP', 'حصري VIP', list.filter(i => i.isVip)));
+      document.getElementById('mobileRowsContainer').innerHTML = rows.join('');
+    }
+
+    /* ----- NEW & HOT, SEARCH, PROFILE ----- */
+    function setNewSubTab(t) {
+      app.newTab = t;
+      document.querySelectorAll('.ntab').forEach(b => {
+        const active = b.getAttribute('data-ntab') === t;
+        b.className = active ? 'ntab px-3.5 py-2 rounded-full bg-white text-black whitespace-nowrap' : 'ntab px-3.5 py-2 rounded-full bg-white/10 text-zinc-200 whitespace-nowrap';
+      });
+      renderNewAndHot();
+    }
+
+    function renderNewAndHot() {
+      const cat = app.config.catalog || [];
+      const arr = app.newTab === 'top10' ? [...cat].sort((a,b) => (a.topRank||99)-(b.topRank||99)) : cat;
+      document.getElementById('newAndHotFeed').innerHTML = arr.map(it => `
+        <div class="rounded-2xl bg-[#14141e] border border-white/10 overflow-hidden">
+          <div onclick="openDetail('${esc(it.id)}')" class="relative aspect-video">${artHtml(it)}<div class="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent"></div><span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-black ${it.isVip ? 'vip-gradient text-black' : 'bg-emerald-500 text-black'}">${it.isVip ? '★ VIP' : 'GRATIS'}</span><div class="absolute bottom-2.5 left-3 right-3"><p dir="rtl" class="font-arabic text-xs text-amber-300 font-bold">${esc(it.arabicTitle)}</p><h4 class="text-base font-black text-white">${esc(it.title)}</h4></div></div>
+          <div class="p-3.5 space-y-2.5 text-xs">
+            <p class="text-zinc-300 leading-relaxed">${esc(it.synopsis)}</p>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[11px] text-zinc-400">${esc((it.genres||[]).join(' · '))}</span>
+              <button type="button" onclick="openPlayer('${esc(it.id)}',0,0)" class="px-4 py-1.5 rounded-xl bg-white text-black font-extrabold">▶ Putar</button>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderAppSearch(q) {
+      const term = String(q || '').trim().toLowerCase();
+      document.getElementById('searchListHeading').textContent = term ? `Hasil untuk "${q}"` : 'Pencarian Terpopuler';
+      const list = (app.config.catalog || []).filter(i => !term || i.title.toLowerCase().includes(term) || (i.arabicTitle||'').toLowerCase().includes(term) || (i.genres||[]).join(' ').toLowerCase().includes(term));
+      document.getElementById('appSearchResults').innerHTML = list.length ? list.map(it => `
+        <div onclick="openDetail('${esc(it.id)}')" class="flex items-center gap-3 p-2 rounded-2xl bg-[#14141e] border border-white/10 active:scale-[0.98] transition">
+          <div class="w-24 aspect-video rounded-xl overflow-hidden shrink-0">${artHtml(it)}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-white truncate">${esc(it.title)}</p>
+            <p dir="rtl" class="font-arabic text-[10px] text-amber-300 truncate text-left">${esc(it.arabicTitle)}</p>
+          </div>
+          <button type="button" onclick="event.stopPropagation(); openPlayer('${esc(it.id)}',0,0)" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0">▶</button>
+        </div>`).join('') : '<p class="text-center text-xs text-zinc-500 py-8">Tidak ditemukan.</p>';
+    }
+
+    function renderProfileScreen() {
+      document.getElementById('myProfileName').textContent = (app.member && app.member.displayName) || app.profile.name;
+      document.getElementById('myProfileTierBadge').innerHTML = hasVip()
+        ? '<span class="text-emerald-400">★ MEMBER VIP AKTIF · Full HD Tanpa Iklan</span>'
+        : 'Mode Gratis · Aktivasi Voucher atau Upgrade VIP';
+      document.getElementById('profileAuthBtnLabel').textContent = app.member ? 'Logout (' + app.member.email.split('@')[0] + ')' : 'Login / Daftar Akun';
+      document.getElementById('appGasUrlInput').value = app.config.backendWebAppUrl || '';
+      document.getElementById('appSyncBadge').textContent = app.config.backendWebAppUrl ? 'Online' : 'Lokal';
+
+      const myItems = (app.config.catalog || []).filter(i => app.myList.includes(i.id));
+      document.getElementById('myProfileListRow').innerHTML = myItems.length ? myItems.map(it => `
+        <div onclick="openDetail('${esc(it.id)}')" class="shrink-0 w-24 rounded-xl overflow-hidden border border-white/10">
+          <div class="aspect-[2/3]">${artHtml(it)}</div>
+        </div>`).join('') : '<p class="text-xs text-zinc-500">Daftar Saya masih kosong.</p>';
+    }
+
+    /* ----- DETAIL & PLAYER (SAME BRAIN/LOGIC: GDRIVE + HLS PRO + DUAL SUB) ----- */
+    function openDetail(id) {
+      const it = (app.config.catalog || []).find(c => c.id === id);
+      if (!it) return;
+      const inList = app.myList.includes(it.id);
+      const eps = (it.seasons && it.seasons[0] && it.seasons[0].episodes) || [];
+      document.getElementById('detailSheetBody').innerHTML = `
+        <div class="relative aspect-video">
+          ${artHtml(it)}
+          <div class="absolute inset-0 bg-gradient-to-t from-[#12121a] via-black/30 to-transparent"></div>
+          <button type="button" onclick="closeOverlay('detailSheet')" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/70 text-white font-bold">✕</button>
+          <div class="absolute bottom-3 left-4 right-4">
+            <p dir="rtl" class="font-arabic text-sm font-bold text-amber-300">${esc(it.arabicTitle)}</p>
+            <h2 class="text-xl font-black text-white">${esc(it.title)}</h2>
+          </div>
+        </div>
+        <div class="p-4 space-y-4">
+          <div class="flex items-center gap-2 text-xs text-zinc-300">
+            <span class="text-emerald-400 font-bold">★ ${esc(it.rating)}</span><span>·</span><span>${it.year}</span><span>·</span>
+            <span class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold">${esc(it.quality||'HD')}</span>
+            <span class="px-2 py-0.5 rounded ${it.isVip?'vip-gradient text-black':'bg-emerald-500 text-black'} text-[10px] font-black">${it.isVip?'★ VIP':'GRATIS'}</span>
+          </div>
+          <button type="button" onclick="closeOverlay('detailSheet'); openPlayer('${esc(it.id)}',0,0)" class="w-full py-3 rounded-xl bg-white text-black font-extrabold text-sm">▶ Putar Sekarang</button>
+          <p class="text-xs text-zinc-300 leading-relaxed">${esc(it.synopsis)}</p>
+          <div class="flex gap-4 text-xs font-bold text-zinc-300 border-y border-white/10 py-3 justify-around">
+            <button type="button" onclick="toggleMyList('${esc(it.id)}'); openDetail('${esc(it.id)}')">${inList ? '✔ Di Daftar' : '+ Daftar Saya'}</button>
+            <button type="button" onclick="openWhatsAppAdmin('Tonton ${esc(it.title)} (Dub Arab + Dual Sub) di Animedubar!')">↗ Bagikan</button>
+          </div>
+          <div class="space-y-2">
+            <h4 class="text-xs font-extrabold uppercase text-zinc-400">Episode (${eps.length})</h4>
+            ${eps.map((ep, idx) => {
+              const locked = (it.isVip || ep.isVip) && !hasVip();
+              return `<div onclick="closeOverlay('detailSheet'); openPlayer('${esc(it.id)}',0,${idx})" class="p-3 rounded-xl bg-[#181825] border border-white/10 flex items-center justify-between gap-2">
+                <div class="min-w-0"><p class="text-xs font-bold text-white truncate">${locked ? '🔒 ' : ''}Eps ${ep.ep}: ${esc(ep.title)}</p><p class="text-[10px] text-zinc-400">${esc(ep.duration)} · Dual Sub ID &amp; AR</p></div>
+                <span class="px-2 py-0.5 rounded text-[9px] font-black ${(it.isVip||ep.isVip)?'bg-amber-500/20 text-amber-300':'bg-emerald-500/20 text-emerald-300'}">${(it.isVip||ep.isVip)?'VIP':'GRATIS'}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      document.getElementById('detailSheet').classList.remove('hidden');
+    }
+
+    function openPlayer(itemId, sIdx=0, eIdx=0) {
+      const it = (app.config.catalog || []).find(c => c.id === itemId);
+      if (!it) return;
+      const eps = (it.seasons && it.seasons[sIdx] && it.seasons[sIdx].episodes) || [];
+      const ep = eps[eIdx] || eps[0];
+      if (!ep) return;
+      if ((it.isVip || ep.isVip) && !hasVip()) {
+        openVipSheet('plans', `"${it.title} — Eps ${ep.ep}" khusus Member VIP.`);
+        return;
+      }
+      app.player = { itemId, sIdx, eIdx, server:'driveSubId', mode:'auto', hls:null };
+      app.continueList = [{ itemId, sIdx, eIdx, pct:30 }, ...app.continueList.filter(x => x.itemId !== itemId)].slice(0, 8);
+      lsSet('adbr_mob_cw_v5', app.continueList);
+      document.getElementById('playerSheet').classList.remove('hidden');
+      renderPlayer();
+    }
+
+    function renderPlayer() {
+      const p = app.player;
+      const it = (app.config.catalog || []).find(c => c.id === p.itemId);
+      const eps = it.seasons[p.sIdx].episodes;
+      const ep = eps[p.eIdx];
+      document.getElementById('plTitle').textContent = it.title;
+      document.getElementById('plSub').textContent = `Eps ${ep.ep}: ${ep.title}`;
+
+      const servers = [{k:'driveSubId',l:'Sub Indo'},{k:'driveSubAr',l:'Sub Arab'},{k:'driveDual',l:'Dual Sub'}];
+      document.getElementById('plServers').innerHTML = servers.map(sv =>
+        `<button type="button" onclick="app.player.server='${sv.k}'; renderPlayer()" class="px-3 py-1.5 rounded-lg text-[11px] font-bold ${p.server===sv.k?'bg-brand text-white':'bg-white/10 text-zinc-300'}">${sv.l}</button>`
+      ).join('');
+
+      document.getElementById('plEpisodeList').innerHTML = eps.map((e, i) => `
+        <button type="button" onclick="openPlayer('${esc(it.id)}',${p.sIdx},${i})" class="w-full text-left p-2.5 rounded-xl border ${i===p.eIdx?'bg-brand/20 border-brand text-white':'bg-[#161622] border-white/10 text-zinc-300'} text-xs font-bold">
+          ${(it.isVip||e.isVip)&&!hasVip()?'🔒 ':''}Eps ${e.ep}: ${esc(e.title)}
+        </button>`).join('');
+
+      clearInterval(app.demoTimer);
+      ['plGdriveWrap','plHlsWrap','plDemoWrap'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+      const fileId = extractDriveId(ep[p.server] || ep.driveSubId);
+      const isDemo = !fileId || /^DEMO_/i.test(fileId);
+      if (p.mode === 'hls' && ep.hlsUrl) {
+        document.getElementById('plHlsWrap').classList.remove('hidden');
+        const v = document.getElementById('plVideo');
+        if (window.Hls && window.Hls.isSupported() && ep.hlsUrl.includes('.m3u8')) {
+          p.hls = new window.Hls(); p.hls.loadSource(ep.hlsUrl); p.hls.attachMedia(v);
+        } else { v.src = ep.hlsUrl; }
+        v.play().catch(()=>{});
+      } else if (!isDemo) {
+        document.getElementById('plGdriveWrap').classList.remove('hidden');
+        document.getElementById('plIframe').src = `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+      } else {
+        document.getElementById('plDemoWrap').classList.remove('hidden');
+        document.getElementById('plDemoBg').innerHTML = artHtml(it);
+        document.getElementById('plSubModeSel').value = app.subMode;
+        app.demoPlaying = true;
+        renderDemoSubs();
+        app.demoTimer = setInterval(() => {
+          if (!app.demoPlaying) return;
+          app.demoPct = (app.demoPct + 1.2) % 100;
+          document.getElementById('plDemoRange').value = Math.round(app.demoPct);
+          renderDemoSubs();
+        }, 1200);
+      }
+    }
+
+    function togglePlayerMode() {
+      app.player.mode = app.player.mode === 'hls' ? 'auto' : 'hls';
+      if (app.player.mode === 'hls') toast('Mode HLS Dual Sub siap. Pastikan URL .m3u8 terisi di CMS.', 'info');
+      renderPlayer();
+    }
+    function toggleDemoPlay() { app.demoPlaying = !app.demoPlaying; }
+    function renderDemoSubs() {
+      const box = document.getElementById('plDemoSubLines');
+      if (app.subMode === 'off') { box.innerHTML = ''; return; }
+      const line = DEMO_SUBS[Math.floor((app.demoPct / 100) * DEMO_SUBS.length) % DEMO_SUBS.length];
+      box.innerHTML =
+        ((app.subMode === 'dual' || app.subMode === 'ar') ? `<div dir="rtl" class="font-arabic font-bold text-sm text-amber-300 bg-black/80 px-2.5 py-0.5 rounded">${esc(line.ar)}</div>` : '') +
+        ((app.subMode === 'dual' || app.subMode === 'id') ? `<div class="font-sans font-semibold text-xs text-white bg-black/80 px-2.5 py-0.5 rounded">${esc(line.id)}</div>` : '');
+    }
+    function playNextEp() {
+      const it = (app.config.catalog || []).find(c => c.id === app.player.itemId);
+      const eps = it.seasons[app.player.sIdx].episodes;
+      if (app.player.eIdx + 1 < eps.length) openPlayer(it.id, app.player.sIdx, app.player.eIdx + 1);
+      else toast('Episode terakhir season ini.', 'info');
+    }
+    function closePlayer() {
+      clearInterval(app.demoTimer);
+      document.getElementById('plIframe').src = '';
+      if (app.player.hls) app.player.hls.destroy();
+      document.getElementById('plVideo').pause();
+      document.getElementById('playerSheet').classList.add('hidden');
+      renderAll();
+    }
+
+    /* ----- VIP, VOUCHER, AUTH & APPS SCRIPT SYNC ----- */
+    function openVipSheet(tab='plans', reason='') {
+      const rEl = document.getElementById('vipLockReason');
+      if (reason) { rEl.textContent = '🔒 ' + reason; rEl.classList.remove('hidden'); }
+      else rEl.classList.add('hidden');
+      document.getElementById('vipPlansList').innerHTML = (app.config.vipPlans || []).map(pl => `
+        <button type="button" onclick="app.selectedPlanId='${pl.id}'; openVipSheet('plans')" class="w-full text-left p-3.5 rounded-2xl border ${app.selectedPlanId===pl.id?'border-amber-400 bg-amber-500/15':'border-white/10 bg-[#181825]'} flex items-center justify-between">
+          <div><p class="text-xs font-extrabold text-amber-400">${esc(pl.name)}</p><p class="text-[11px] text-zinc-400">${esc(pl.duration)} · ${esc(pl.note||'')}</p></div>
+          <p class="text-base font-black text-white">${esc(pl.price)}</p>
+        </button>`).join('');
+      switchVipTab(tab);
+      document.getElementById('vipSheet').classList.remove('hidden');
+    }
+    function switchVipTab(t) {
+      document.getElementById('vipPanePlans').classList.toggle('hidden', t !== 'plans');
+      document.getElementById('vipPaneVoucher').classList.toggle('hidden', t !== 'voucher');
+      document.getElementById('vtabPlans').className = t==='plans' ? 'py-2 rounded-xl bg-amber-500 text-black' : 'py-2 rounded-xl bg-white/10 text-zinc-200';
+      document.getElementById('vtabVoucher').className = t==='voucher' ? 'py-2 rounded-xl bg-amber-500 text-black' : 'py-2 rounded-xl bg-white/10 text-zinc-200';
+      const vOk = app.voucher && Date.now() < Number(app.voucher.expiresAt);
+      document.getElementById('activeVoucherBox').classList.toggle('hidden', !vOk);
+      document.getElementById('voucherForm').classList.toggle('hidden', vOk);
+      if (vOk) document.getElementById('activeVoucherDetail').textContent = `${app.voucher.planName} · Aktif s/d ${new Date(app.voucher.expiresAt).toLocaleDateString('id-ID')}`;
+    }
+    async function redeemVoucher(e) {
+      e.preventDefault();
+      const code = document.getElementById('voucherInp').value.trim().toUpperCase();
+      if (app.config.backendWebAppUrl) {
+        try {
+          const data = await gasPost('/api/vouchers/redeem', { code });
+          app.voucher = { code: data.code, planName: data.planName, expiresAt: Date.parse(data.expiresAt) || (Date.now() + data.durationDays * 86400000) };
+          lsSet('adbr_mob_voucher_v5', app.voucher);
+          toast('VIP aktif via Backend Apps Script!', 'vip');
+          switchVipTab('voucher'); renderAll(); return;
+        } catch (err) { toast(err.message, 'error'); return; }
+      }
+      const found = (app.config.vouchers || []).find(v => v.code.toUpperCase() === code && v.status === 'ACTIVE');
+      if (!found) { toast('Kode voucher tidak ditemukan.', 'error'); return; }
+      app.voucher = { code: found.code, planName: found.planName, expiresAt: Date.now() + (found.durationDays || 30) * 86400000 };
+      lsSet('adbr_mob_voucher_v5', app.voucher);
+      toast('Selamat! ' + found.planName + ' aktif!', 'vip');
+      switchVipTab('voucher'); renderAll();
+    }
+    function logoutVoucher() { app.voucher = null; lsSet('adbr_mob_voucher_v5', null); switchVipTab('voucher'); renderAll(); toast('Voucher dikeluarkan.', 'info'); }
+
+    function orderSelectedPlanWa() {
+      const pl = (app.config.vipPlans || []).find(p => p.id === app.selectedPlanId) || app.config.vipPlans[0];
+      openWhatsAppAdmin(`Halo Admin Animedubar, saya ingin berlangganan ${pl.name} (${pl.price} / ${pl.duration}) untuk Aplikasi HP Animedubar.`);
+    }
+    function openWhatsAppAdmin(text) {
+      const wa = String(app.config.whatsappNumber || '6281234567890').replace(/[^0-9]/g, '');
+      window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function openAuthSheet() {
+      if (app.member) { app.member = null; lsSet('adbr_mob_member_v5', null); renderAll(); toast('Berhasil logout.', 'info'); return; }
+      document.getElementById('authSheet').classList.remove('hidden');
+    }
+    async function submitAppLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim().toLowerCase();
+      const password = document.getElementById('authPass').value;
+      if (!app.config.backendWebAppUrl) { toast('Hubungkan URL Apps Script Backend di tab Saya terlebih dahulu.', 'error'); return; }
+      try {
+        const data = await gasPost('/api/auth/login', { email, password });
+        app.member = Object.assign({}, data.user, { token: data.token });
+        lsSet('adbr_mob_member_v5', app.member);
+        closeOverlay('authSheet'); renderAll(); toast('Login berhasil! Selamat datang ' + app.member.displayName, 'vip');
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function gasPost(path, body={}) {
+      const res = await fetch(app.config.backendWebAppUrl, {
+        method: 'POST', redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ path, method: 'POST', token: (app.member && app.member.token) || '', body })
+      });
+      const data = await res.json();
+      if (!res.ok || data.ok === false) throw new Error(data.error || 'Gagal terhubung ke Apps Script');
+      return data;
+    }
+
+    async function syncFromBackend(silent=true) {
+      if (!app.config.backendWebAppUrl) return;
+      try {
+        const data = await gasPost('/api/bootstrap', {});
+        if (Array.isArray(data.catalog) && data.catalog.length) {
+          const epMap = new Map();
+          (data.episodes || []).forEach(e => {
+            if (!epMap.has(e.contentId)) epMap.set(e.contentId, []);
+            epMap.get(e.contentId).push({ ep: Number(e.epNumber||1), title: e.title||'Episode', duration: e.duration||'24 mnt', isVip: String(e.isVip).toUpperCase()==='TRUE', driveSubId: e.gdriveSubId||'DEMO', driveSubAr: e.gdriveSubAr||e.gdriveSubId||'DEMO', driveDual: e.gdriveDualSub||e.gdriveSubId||'DEMO', hlsUrl: e.hlsUrl||'' });
+          });
+          app.config.catalog = data.catalog.map((c, idx) => ({
+            id: c.id || ('cat-' + idx), title: c.title, arabicTitle: c.titleAr || 'مدبلج عربي',
+            type: String(c.type||'anime').toLowerCase().includes('movie') ? 'movie' : 'anime',
+            year: Number(c.year||2026), rating: String(c.rating||'9.1'), quality: 'HD 1080p',
+            featured: String(c.isFeatured).toUpperCase()==='TRUE', topRank: Number(c.top10Rank||0) || null,
+            isVip: String(c.isVip).toUpperCase()==='TRUE',
+            genres: String(c.genres||'Aksi, Dub Arab').split(',').map(s=>s.trim()).filter(Boolean),
+            posterUrl: c.poster||'', backdropUrl: c.backdrop||'', synopsis: c.synopsis||'',
+            theme: { c1:'#1d4ed8', c2:'#0f172a', accent:'#ef4444' },
+            seasons: [{ seasonNumber:1, title:'Season 1', episodes: epMap.get(c.id) || [{ ep:1, title:'Episode 1', duration:'24 mnt', isVip:String(c.isVip).toUpperCase()==='TRUE', driveSubId:'DEMO_EP' }] }]
+          }));
+        }
+        (data.settings || []).forEach(s => {
+          if (s.key === 'whatsapp' && s.value) app.config.whatsappNumber = s.value;
+          if (s.key === 'brandName' && s.value) app.config.brandName = s.value;
+        });
+        lsSet('adbr_mob_cfg_v5', app.config);
+        renderAll();
+        if (!silent) toast('Katalog aplikasi tersinkronisasi dari Apps Script!', 'vip');
+      } catch (err) {
+        if (!silent) toast('Sync gagal: ' + err.message, 'error');
+      }
+    }
+
+    function saveAppBackendUrl() {
+      app.config.backendWebAppUrl = document.getElementById('appGasUrlInput').value.trim();
+      lsSet('adbr_mob_cfg_v5', app.config);
+      syncFromBackend(false);
+    }
+
+    function toggleMyList(id) {
+      app.myList = app.myList.includes(id) ? app.myList.filter(x => x !== id) : [id, ...app.myList];
+      lsSet('adbr_mob_list_v5', app.myList);
+      renderAll();
+      toast(app.myList.includes(id) ? 'Ditambahkan ke Daftar Saya' : 'Dihapus dari Daftar Saya');
+    }
+
+    function closeOverlay(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function renderAll() {
+      document.getElementById('activeProfileLabel').textContent = app.profile.name;
+      const pill = document.getElementById('topVipPill');
+      pill.textContent = hasVip() ? '★ VIP AKTIF' : '★ VIP';
+      pill.className = hasVip()
+        ? 'px-2.5 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/45 text-emerald-300 text-[11px] font-extrabold'
+        : 'px-2.5 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-extrabold';
+      renderHome();
+      if (app.tab === 'profile') renderProfileScreen();
+    }
+
+    window.addEventListener('load', () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+      renderAll();
+      syncFromBackend(true);
+      setTimeout(() => {
+        const sp = document.getElementById('appSplash');
+        sp.style.opacity = '0';
+        setTimeout(() => {
+          sp.classList.add('hidden');
+          if (!localStorage.getItem('adbr_mob_prof_v5')) {
+            document.getElementById('profileGate').classList.remove('hidden');
+          }
+        }, 450);
+      }, 900);
+    });
+  </script>
+</body>
+</html>

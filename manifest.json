@@ -1,0 +1,51 @@
+{
+  "name": "Animedubar \u2014 Anime & Film Dub Arab",
+  "short_name": "Animedubar",
+  "description": "Aplikasi streaming Anime & Film Dubbing Bahasa Arab HD dengan Dual Subtitle Indonesia & Arab.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#0b0b0f",
+  "theme_color": "#0b0b0f",
+  "lang": "id",
+  "categories": [
+    "entertainment",
+    "video"
+  ],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cari Anime & Film",
+      "short_name": "Cari",
+      "url": "./index.html#search"
+    },
+    {
+      "name": "Baru & Populer",
+      "short_name": "Baru",
+      "url": "./index.html#new"
+    },
+    {
+      "name": "Animedubar Saya",
+      "short_name": "Profil",
+      "url": "./index.html#profile"
+    }
+  ]
+}
