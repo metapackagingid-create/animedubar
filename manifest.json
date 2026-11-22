@@ -1,7 +1,7 @@
 {
-  "name": "Animedubar \u2014 Anime & Film Dub Arab",
-  "short_name": "Animedubar",
-  "description": "Aplikasi streaming Anime & Film Dubbing Bahasa Arab HD dengan Dual Subtitle Indonesia & Arab.",
+  "name": "Animedubar CMS \u2014 Admin Master Control",
+  "short_name": "ADBR CMS",
+  "description": "Aplikasi HP resmi & aman khusus Pemilik / Admin untuk mengelola Animedubar (Konten, Google Drive, Voucher VIP, Transaksi, User, Broadcast).",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -10,12 +10,12 @@
     "minimal-ui"
   ],
   "orientation": "portrait-primary",
-  "background_color": "#0b0b0f",
-  "theme_color": "#0b0b0f",
+  "background_color": "#090b10",
+  "theme_color": "#090b10",
   "lang": "id",
   "categories": [
-    "entertainment",
-    "video"
+    "business",
+    "productivity"
   ],
   "icons": [
     {
@@ -29,23 +29,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Cari Anime & Film",
-      "short_name": "Cari",
-      "url": "./index.html#search"
-    },
-    {
-      "name": "Baru & Populer",
-      "short_name": "Baru",
-      "url": "./index.html#new"
-    },
-    {
-      "name": "Animedubar Saya",
-      "short_name": "Profil",
-      "url": "./index.html#profile"
     }
   ]
 }

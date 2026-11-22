@@ -1,5 +1,5 @@
-const CACHE_NAME = 'animedubar-app-v5';
-const APP_SHELL = [
+const CACHE_NAME = 'animedubar-admin-cms-v5';
+const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
@@ -9,7 +9,7 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
   );
 });
 
@@ -25,8 +25,8 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = req.url || '';
-  // Never cache Apps Script API / Google Drive video / HLS streams
-  if (url.includes('script.google.com') || url.includes('drive.google.com') || url.includes('.m3u8') || url.includes('.ts')) {
+  // SECURITY: Never cache Apps Script API or sensitive responses
+  if (url.includes('script.google.com') || url.includes('googleapis.com')) {
     return;
   }
   event.respondWith(
