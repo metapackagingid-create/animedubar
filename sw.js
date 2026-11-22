@@ -1,5 +1,5 @@
-const CACHE_NAME = 'animedubar-admin-cms-v5';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'animedubar-app-v6';
+const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
@@ -9,7 +9,7 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
   );
 });
 
@@ -25,8 +25,8 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = req.url || '';
-  // SECURITY: Never cache Apps Script API or sensitive responses
-  if (url.includes('script.google.com') || url.includes('googleapis.com')) {
+  // Never cache Apps Script API, Google Drive video, or HLS segments in browser HTTP cache
+  if (url.includes('script.google.com') || url.includes('drive.google.com') || url.includes('.m3u8') || url.includes('.ts')) {
     return;
   }
   event.respondWith(
@@ -39,5 +39,17 @@ self.addEventListener('fetch', (event) => {
         return res;
       })
       .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow('./index.html');
+    })
   );
 });

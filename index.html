@@ -3,649 +3,2065 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#090b10" />
-  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#000000" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="ADBR CMS" />
-  <title>Animedubar CMS — Admin Mobile App</title>
+  <meta name="apple-mobile-web-app-title" content="Animedubar" />
+  <title>Animedubar — Streaming Anime &amp; Film Dubbing Arab</title>
   <link rel="manifest" href="./manifest.json" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
-  <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+  <link id="dynFavicon" rel="icon" type="image/png" href="./icons/icon-192.png" />
+  <link id="dynAppleIcon" rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
-          colors: { obsidian:'#090b10', panel:'#121621', brand:'#E50914', vip:'#F59E0B', safe:'#10B981' },
-          fontFamily: { sans:['Inter','system-ui','sans-serif'], arabic:['Cairo','sans-serif'], display:['Outfit','Inter','sans-serif'] }
+          colors: {
+            nfBlack: '#000000',
+            nfSurface: '#141414',
+            nfCard: '#1c1c1e',
+            brand: 'var(--brand-accent, #E50914)',
+            vip: '#F59E0B'
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            arabic: ['Cairo', 'sans-serif'],
+            display: ['Outfit', 'Inter', 'sans-serif']
+          }
         }
       }
     };
   </script>
   <style>
-    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html, body { background:#090b10; color:#f4f4f5; margin:0; padding:0; overflow-x:hidden; overscroll-behavior-y:contain; }
+    :root { --brand-accent: #E50914; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; }
+    html, body { background:#000000; color:#ffffff; margin:0; padding:0; overflow-x:hidden; overscroll-behavior-y:contain; font-family:'Inter',system-ui,sans-serif; }
+    video { -webkit-user-select:none; user-select:none; pointer-events:none; }
     .no-scrollbar::-webkit-scrollbar { display:none; }
     .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+    .vip-gradient { background: linear-gradient(135deg, #FDE047 0%, #F59E0B 50%, #D97706 100%); }
     .safe-top { padding-top: max(env(safe-area-inset-top), 10px); }
     .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 8px); }
-    .vip-gradient { background: linear-gradient(135deg, #FDE047 0%, #F59E0B 50%, #D97706 100%); }
+    .rank-stroke { font-family:'Outfit',sans-serif; font-weight:900; font-size:5.6rem; line-height:0.74; color:#000000; -webkit-text-stroke:2.6px rgba(255,255,255,0.62); user-select:none; }
+    .nf-seek { -webkit-appearance:none; appearance:none; background:rgba(255,255,255,0.28); height:4px; border-radius:999px; outline:none; }
+    .nf-seek::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; border-radius:50%; background:var(--brand-accent,#E50914); box-shadow:0 0 10px rgba(229,9,20,0.9); cursor:pointer; }
+    .nf-bright-wrap { writing-mode:bt-lr; }
+    @keyframes nfLogoPop { 0%{transform:scale(0.8);opacity:0} 50%{transform:scale(1.06);opacity:1} 100%{transform:scale(1);opacity:1} }
+    .nf-splash-anim { animation: nfLogoPop 0.85s cubic-bezier(0.22,1,0.36,1) forwards; }
+    @keyframes slideDownIn { from{transform:translate(-50%,-20px);opacity:0} to{transform:translate(-50%,0);opacity:1} }
+    .notif-pop { animation: slideDownIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .crop-fit { object-fit:contain !important; transform:scale(1) !important; }
+    .crop-zoom { object-fit:cover !important; transform:scale(1.08) !important; }
+    .crop-fill { object-fit:fill !important; transform:scale(1) !important; }
   </style>
 </head>
-<body class="bg-obsidian text-zinc-100 min-h-screen pb-24">
+<body class="bg-black text-white min-h-screen select-none pb-20" oncontextmenu="return false;">
 
   <!-- ============================================================
-       SECURITY GATE 1: MANDATORY ADMIN LOGIN (APPS SCRIPT BACKEND)
+       1. SPLASH SCREEN (NETFLIX MOBILE LAUNCH)
        ============================================================ -->
-  <div id="adminLoginGate" class="fixed inset-0 z-[150] bg-[#090b10] flex items-center justify-center p-5 overflow-y-auto">
-    <div class="w-full max-w-sm bg-panel border border-amber-500/30 rounded-3xl p-6 space-y-5 shadow-2xl">
-      <div class="text-center space-y-2">
-        <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-3xl">🛡️</div>
-        <h1 class="font-display font-black text-2xl text-white">ANIMEDUBAR CMS</h1>
-        <p class="text-xs text-zinc-400">Aplikasi HP khusus Pemilik &amp; Admin. Terlindungi RBAC 7 Role + Token HMAC Apps Script.</p>
+  <div id="appSplash" class="fixed inset-0 z-[220] bg-black flex flex-col items-center justify-center gap-3 transition-opacity duration-500">
+    <div class="nf-splash-anim flex flex-col items-center gap-3">
+      <div id="splashLogoWrap" class="w-20 h-20 rounded-2xl bg-[var(--brand-accent)] flex items-center justify-center shadow-2xl shadow-red-600/50 overflow-hidden">
+        <svg class="w-11 h-11 text-white fill-current ml-1" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
       </div>
+      <h1 id="splashBrandName" class="font-display font-black text-3xl tracking-[0.22em] text-[var(--brand-accent)]">ANIMEDUBAR</h1>
+      <p class="text-[10px] font-bold tracking-[0.25em] text-zinc-400 uppercase">DUB ARAB · DUAL SUB ID/AR</p>
+    </div>
+  </div>
 
-      <form onsubmit="handleAdminLogin(event)" class="space-y-3 text-xs">
-        <div>
-          <label class="block text-zinc-300 font-semibold mb-1">URL Google Apps Script Web App *</label>
-          <input id="admGasUrl" type="url" required placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-[#0a0d14] border border-white/15 rounded-xl px-3.5 py-2.5 text-emerald-300 font-mono text-[11px]" />
+  <!-- ============================================================
+       2. LIVE FLOATING INCOMING NOTIFICATION BANNER (ON SCREEN)
+       ============================================================ -->
+  <div id="liveNotifBanner" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-[210] w-[94%] max-w-md bg-[#18181c]/95 backdrop-blur-xl border border-white/15 rounded-2xl p-3.5 shadow-2xl notif-pop">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[var(--brand-accent)] flex items-center justify-center text-lg shrink-0 shadow-lg">🔔</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between gap-2">
+          <span id="liveNotifCat" class="text-[9px] font-black uppercase tracking-widest text-amber-400">VIDEO BARU</span>
+          <button type="button" onclick="hideLiveNotifBanner()" class="text-zinc-400 text-xs px-1">✕</button>
         </div>
-        <div>
-          <label class="block text-zinc-300 font-semibold mb-1">Email Admin *</label>
-          <input id="admEmail" type="email" required placeholder="admin@animedubar.com" class="w-full bg-[#0a0d14] border border-white/15 rounded-xl px-3.5 py-2.5 text-white" />
-        </div>
-        <div>
-          <label class="block text-zinc-300 font-semibold mb-1">Password Admin *</label>
-          <input id="admPass" type="password" required placeholder="••••••••••••" class="w-full bg-[#0a0d14] border border-white/15 rounded-xl px-3.5 py-2.5 text-white" />
-        </div>
-        <div>
-          <label class="block text-zinc-300 font-semibold mb-1">Kode 2FA (Jika Aktif)</label>
-          <input id="admTotp" type="text" placeholder="Opsional" class="w-full bg-[#0a0d14] border border-white/15 rounded-xl px-3.5 py-2.5 text-amber-300 font-mono" />
-        </div>
-        <button id="admLoginBtn" type="submit" class="w-full py-3 rounded-xl vip-gradient text-black font-extrabold text-sm shadow-lg">Masuk ke Panel Admin</button>
-      </form>
-
-      <div class="pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[11px]">
-        <button type="button" onclick="triggerAdminPwaInstall()" class="text-emerald-400 font-bold underline">📲 Instal ke Layar HP</button>
-        <button type="button" onclick="enterOfflineDemoAdmin()" class="text-zinc-400 hover:text-zinc-200">Mode Preview Offline</button>
+        <p id="liveNotifTitle" class="text-xs font-extrabold text-white truncate mt-0.5">-</p>
+        <p id="liveNotifBody" class="text-[11px] text-zinc-300 line-clamp-2 mt-0.5">-</p>
       </div>
     </div>
   </div>
 
   <!-- ============================================================
-       SECURITY GATE 2: 6-DIGIT LOCAL APP LOCK PIN (IDLE AUTO-LOCK)
+       3. PROFILE PICKER ("SIAPA YANG MENONTON?" — 100% NETFLIX)
        ============================================================ -->
-  <div id="pinLockOverlay" class="hidden fixed inset-0 z-[160] bg-[#07090e]/98 backdrop-blur-xl flex items-center justify-center p-6">
-    <div class="w-full max-w-xs text-center space-y-5">
-      <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-2xl">🔒</div>
-      <div>
-        <h2 class="text-lg font-black text-white">Aplikasi Admin Terkunci</h2>
-        <p class="text-xs text-zinc-400 mt-0.5">Masukkan PIN 6 digit untuk membuka sesi CMS</p>
+  <div id="profileGate" class="hidden fixed inset-0 z-[170] bg-black flex flex-col items-center justify-center p-6">
+    <div class="w-full max-w-sm text-center space-y-7">
+      <div class="flex items-center justify-center gap-2">
+        <span id="gateBrandName" class="font-display font-black text-2xl tracking-[0.18em] text-[var(--brand-accent)]">ANIMEDUBAR</span>
       </div>
-      <input id="pinUnlockInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••••" class="w-full text-center tracking-[0.5em] text-2xl font-mono font-black bg-panel border border-white/20 rounded-2xl py-3.5 text-amber-300 focus:border-amber-400 focus:outline-none" />
-      <button type="button" onclick="verifyAppLockPin()" class="w-full py-3 rounded-xl vip-gradient text-black font-extrabold text-sm">Buka Kunci</button>
-      <button type="button" onclick="logoutAdminSession()" class="text-xs text-red-400 underline">Logout Sesi Admin</button>
+      <h2 data-i18n="whoWatching" class="text-lg font-bold text-white">Siapa yang menonton?</h2>
+      <div class="grid grid-cols-2 gap-5">
+        <button type="button" onclick="selectProfile('Utama', 'dual', '#E50914', 'A')" class="group flex flex-col items-center gap-2">
+          <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-[#E50914] to-[#7f1d1d] border-2 border-white/20 group-active:scale-95 transition flex items-center justify-center text-4xl font-black text-white shadow-xl">A</div>
+          <span class="text-xs font-semibold text-zinc-200">Utama (Dual Sub)</span>
+        </button>
+        <button type="button" onclick="selectProfile('Belajar Arab', 'ar', '#F59E0B', 'ع')" class="group flex flex-col items-center gap-2">
+          <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-amber-400 to-amber-700 border-2 border-white/20 group-active:scale-95 transition flex items-center justify-center font-arabic text-4xl font-extrabold text-black shadow-xl">ع</div>
+          <span class="text-xs font-semibold text-zinc-200">Belajar Arab</span>
+        </button>
+        <button type="button" onclick="selectProfile('Keluarga', 'id', '#10B981', 'K')" class="group flex flex-col items-center gap-2">
+          <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-900 border-2 border-white/20 group-active:scale-95 transition flex items-center justify-center text-4xl font-black text-white shadow-xl">K</div>
+          <span class="text-xs font-semibold text-zinc-200">Keluarga (Sub ID)</span>
+        </button>
+        <button type="button" onclick="selectProfile('Anak', 'dual', '#2563EB', 'KIDS')" class="group flex flex-col items-center gap-2">
+          <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-900 border-2 border-white/20 group-active:scale-95 transition flex items-center justify-center text-xl font-black text-white shadow-xl">KIDS</div>
+          <span class="text-xs font-semibold text-zinc-200">Anak-anak</span>
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- ============================================================
-       ADMIN TOP BAR
+       4. TOP APP BAR (LATEST NETFLIX MOBILE HEADER + PILLS)
        ============================================================ -->
-  <header class="fixed top-0 left-0 right-0 z-40 safe-top px-4 pb-3 bg-[#0c0f17]/95 backdrop-blur-xl border-b border-white/10">
-    <div class="max-w-2xl mx-auto flex items-center justify-between gap-2">
+  <header id="mobileTopBar" class="fixed top-0 left-0 right-0 z-40 safe-top px-3.5 pb-2.5 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-md">
+    <div class="max-w-xl mx-auto flex items-center justify-between gap-2">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-lg shrink-0">🛡️</div>
-        <div class="min-w-0 leading-tight">
-          <h1 class="font-display font-black text-base text-white truncate">ADBR CMS Admin</h1>
-          <p id="hdrRoleBadge" class="text-[10px] font-bold text-amber-400 truncate">SUPER_ADMIN · Terhubung</p>
+        <div id="topBrandLogoBox" class="w-7 h-7 rounded-md bg-[var(--brand-accent)] flex items-center justify-center shrink-0 overflow-hidden">
+          <svg class="w-4 h-4 text-white fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </div>
+        <span class="font-bold text-lg text-white truncate"><span data-i18n="forPrefix">Untuk</span> <span id="activeProfileLabel">Utama</span></span>
       </div>
+
       <div class="flex items-center gap-1.5 shrink-0">
-        <button id="admInstallBtn" type="button" onclick="triggerAdminPwaInstall()" class="hidden px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-extrabold">Instal</button>
-        <button type="button" onclick="refreshAdminData(false)" class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white text-sm" title="Sinkronkan Data">↻</button>
-        <button type="button" onclick="lockAppNow()" class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center text-sm" title="Kunci Layar PIN">🔒</button>
+        <button id="pwaInstallHeaderBtn" type="button" onclick="triggerPwaInstall()" class="hidden px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-extrabold">Instal</button>
+        <button type="button" onclick="openNotificationsSheet()" aria-label="Notifikasi" class="relative w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span id="topNotifDot" class="hidden absolute top-1 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-[var(--brand-accent)] text-white text-[9px] font-black flex items-center justify-center">0</span>
+        </button>
+        <button type="button" onclick="openVipCheckoutSheet('plans')" id="topVipPill" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/45 text-amber-300 text-[11px] font-extrabold">★ VIP</button>
+        <button type="button" onclick="switchAppTab('search')" aria-label="Cari" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+        </button>
       </div>
+    </div>
+
+    <!-- Latest Netflix Mobile Category Pills -->
+    <div id="homeFilterPills" class="max-w-xl mx-auto flex items-center gap-2 mt-2.5 overflow-x-auto no-scrollbar text-xs font-semibold">
+      <button type="button" data-pill="all" onclick="setHomePill('all')" class="hpill px-3.5 py-1.5 rounded-full bg-white text-black font-bold whitespace-nowrap" data-i18n="pillAll">Semua</button>
+      <button type="button" data-pill="anime" onclick="setHomePill('anime')" class="hpill px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-zinc-100 whitespace-nowrap" data-i18n="pillAnime">Acara Anime</button>
+      <button type="button" data-pill="movie" onclick="setHomePill('movie')" class="hpill px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-zinc-100 whitespace-nowrap" data-i18n="pillMovie">Film</button>
+      <button type="button" onclick="openGenrePicker()" class="px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-zinc-100 whitespace-nowrap"><span id="activeGenrePillLabel" data-i18n="pillCat">Kategori</span> ▾</button>
+      <button type="button" data-pill="vip" onclick="setHomePill('vip')" class="hpill px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 whitespace-nowrap">★ VIP</button>
     </div>
   </header>
 
   <!-- ============================================================
-       MAIN MOBILE WORKSPACE (5 DEDICATED ADMIN TABS)
+       5. MAIN APP SCREENS (4 AUTHENTIC NETFLIX MOBILE TABS)
        ============================================================ -->
-  <main id="adminWorkspace" class="max-w-2xl mx-auto pt-20 px-3.5 space-y-5 text-xs">
-    <!-- Dynamically rendered per active tab -->
+  <main class="max-w-xl mx-auto pt-28 px-3.5 space-y-6">
+
+    <!-- PWA Install Banner -->
+    <div id="pwaInstallBanner" class="hidden p-3.5 rounded-2xl bg-[#18181c] border border-white/15 flex items-center justify-between gap-3 text-xs">
+      <div class="min-w-0">
+        <p class="font-extrabold text-white" data-i18n="installTitle">Instal Aplikasi Animedubar</p>
+        <p class="text-[11px] text-zinc-400" data-i18n="installDesc">Layar penuh tanpa browser, notifikasi real-time &amp; penyimpanan in-app.</p>
+      </div>
+      <button type="button" onclick="triggerPwaInstall()" class="px-3.5 py-2 rounded-xl bg-[var(--brand-accent)] text-white font-extrabold shrink-0">Instal</button>
+    </div>
+
+    <!-- SCREEN 1: BERANDA (LATEST NETFLIX MOBILE HOME WITH AMBIENT BILLBOARD) -->
+    <section id="tab-home" class="app-screen space-y-6">
+      <div id="mobileHeroCard" class="relative w-full aspect-[3/4.15] max-h-[540px] rounded-2xl overflow-hidden border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.9)]"></div>
+      <div id="mobileRowsContainer" class="space-y-6"></div>
+    </section>
+
+    <!-- SCREEN 2: BARU & POPULER (NEW & HOT) -->
+    <section id="tab-new" class="app-screen hidden space-y-4">
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold">
+        <button type="button" onclick="setNewSubTab('hot')" data-ntab="hot" class="ntab px-3.5 py-2 rounded-full bg-white text-black whitespace-nowrap">🔥 Semua Orang Menonton</button>
+        <button type="button" onclick="setNewSubTab('top10')" data-ntab="top10" class="ntab px-3.5 py-2 rounded-full bg-white/10 text-zinc-200 whitespace-nowrap">🏆 Top 10 Acara</button>
+        <button type="button" onclick="setNewSubTab('soon')" data-ntab="soon" class="ntab px-3.5 py-2 rounded-full bg-white/10 text-zinc-200 whitespace-nowrap">🍿 Segera Hadir</button>
+      </div>
+      <div id="newAndHotFeed" class="space-y-4"></div>
+    </section>
+
+    <!-- SCREEN 3: CARI (SEARCH) -->
+    <section id="tab-search" class="app-screen hidden space-y-4">
+      <div class="flex items-center gap-2.5 bg-[#1c1c1e] border border-white/15 rounded-xl px-3.5 py-3">
+        <svg class="w-5 h-5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+        <input id="appSearchInput" type="text" oninput="renderAppSearch(this.value)" placeholder="Cari acara, film, judul العربية, genre..." class="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none" />
+        <button type="button" onclick="document.getElementById('appSearchInput').value=''; renderAppSearch('');" class="text-xs text-zinc-400">✕</button>
+      </div>
+      <h3 id="searchListHeading" class="text-sm font-extrabold text-white">Acara &amp; Film Rekomendasi</h3>
+      <div id="appSearchResults" class="space-y-2.5"></div>
+    </section>
+
+    <!-- SCREEN 4: ANIMEDUBAR SAYA (MY NETFLIX: PROFILE, NOTIFS, OFFLINE VAULT, ACCOUNT) -->
+    <section id="tab-profile" class="app-screen hidden space-y-5">
+      <!-- Centered Netflix Avatar Header -->
+      <div class="flex flex-col items-center text-center gap-2 pt-1">
+        <div id="myAvatarBox" class="w-16 h-16 rounded-xl bg-[var(--brand-accent)] flex items-center justify-center text-3xl font-black text-white shadow-xl">A</div>
+        <button type="button" onclick="document.getElementById('profileGate').classList.remove('hidden')" class="flex items-center gap-1 text-base font-extrabold text-white">
+          <span id="myProfileName">Utama</span><span class="text-zinc-400 text-xs">▾</span>
+        </button>
+        <span id="myProfileTierBadge" class="px-3 py-1 rounded-full bg-white/10 text-[11px] font-bold text-zinc-300">Akun Gratis</span>
+      </div>
+
+      <!-- Quick Netflix-style Menu Tiles -->
+      <div class="grid grid-cols-2 gap-2.5 text-xs font-bold">
+        <button type="button" onclick="openVipCheckoutSheet('plans')" class="p-3.5 rounded-2xl vip-gradient text-black text-left space-y-1 font-extrabold">
+          <span class="text-base block">★</span>
+          <span data-i18n="upgradeVip">Langganan VIP (QRIS / TF)</span>
+        </button>
+        <button type="button" onclick="openVipCheckoutSheet('voucher')" class="p-3.5 rounded-2xl bg-[#18181c] border border-amber-500/40 text-amber-300 text-left space-y-1">
+          <span class="text-base block">🎟️</span>
+          <span>Redeem Kode Voucher</span>
+        </button>
+        <button type="button" onclick="openAuthSheet()" class="p-3.5 rounded-2xl bg-[#18181c] border border-white/10 text-white text-left space-y-1">
+          <span class="text-base block">👤</span>
+          <span id="profileAuthBtnLabel">Masuk / Daftar Akun</span>
+        </button>
+        <button type="button" onclick="enableSystemNotifications()" class="p-3.5 rounded-2xl bg-[#18181c] border border-white/10 text-emerald-300 text-left space-y-1">
+          <span class="text-base block">🔔</span>
+          <span id="notifPermLabel">Aktifkan Notifikasi HP</span>
+        </button>
+      </div>
+
+      <!-- IN-APP ISOLATED OFFLINE VAULT (ENCRYPTED SANDBOX — TIDAK MASUK GALERI HP) -->
+      <div class="p-4 rounded-2xl bg-[#141418] border border-white/10 space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm">⬇</span>
+            <div>
+              <h3 class="text-sm font-extrabold text-white" data-i18n="offlineVaultTitle">Unduhan Dalam Aplikasi</h3>
+              <p id="offlineQuotaSummary" class="text-[11px] text-zinc-400">0 / 0 Episode · Hanya tonton di dalam aplikasi</p>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[9px] font-black">TERENKRIPSI</span>
+        </div>
+        <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden"><div id="offlineQuotaBar" class="h-full bg-blue-500 transition-all" style="width:0%"></div></div>
+        <p class="text-[10px] text-zinc-400 leading-relaxed">🔒 Video disimpan di ruang aman internal aplikasi (bukan di galeri/penyimpanan HP) dan hanya aktif selama masa langganan VIP Anda berlaku.</p>
+        <div id="offlineVaultList" class="space-y-2"></div>
+      </div>
+
+      <!-- Daftar Saya -->
+      <div class="space-y-2">
+        <h3 class="text-sm font-extrabold text-white" data-i18n="myList">Daftar Saya</h3>
+        <div id="myProfileListRow" class="flex gap-2.5 overflow-x-auto no-scrollbar pb-1"></div>
+      </div>
+
+      <!-- Pengaturan Bahasa & Server Backend -->
+      <div class="p-4 rounded-2xl bg-[#141418] border border-white/10 space-y-3 text-xs">
+        <div class="flex items-center justify-between">
+          <label class="font-bold text-white" data-i18n="languageLabel">Bahasa Aplikasi</label>
+          <select id="appLangSelect" onchange="setAppLanguage(this.value)" class="bg-black border border-white/15 rounded-xl px-3 py-1.5 text-white font-bold">
+            <option value="id">Bahasa Indonesia (Default)</option>
+            <option value="en">English</option>
+            <option value="ar">العربية (Arabic)</option>
+          </select>
+        </div>
+        <div class="pt-2 border-t border-white/10 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-zinc-300">Server Sinkronisasi</span>
+            <span id="appSyncBadge" class="px-2 py-0.5 rounded-full bg-zinc-800 text-[10px] font-bold text-zinc-300">Lokal</span>
+          </div>
+          <input id="appGasUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-black border border-white/15 rounded-xl px-3 py-2 text-emerald-300 font-mono text-[11px]" />
+          <div class="flex gap-2">
+            <button type="button" onclick="saveAppBackendUrl()" class="flex-1 py-2 rounded-xl bg-[var(--brand-accent)] text-white font-bold">Simpan &amp; Sinkron</button>
+            <button type="button" onclick="openWhatsAppAdmin('Halo Admin Animedubar, saya butuh bantuan aplikasi HP.')" class="px-3.5 py-2 rounded-xl bg-emerald-600/25 text-emerald-300 font-bold">Chat WA</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- ============================================================
-       BOTTOM NAVIGATION BAR (5 MOBILE ADMIN TABS)
+       6. BOTTOM NAVIGATION BAR (4 AUTHENTIC NETFLIX MOBILE TABS)
        ============================================================ -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-[#0d1018]/95 backdrop-blur-xl border-t border-white/10 safe-bottom">
-    <div class="max-w-2xl mx-auto grid grid-cols-5 pt-2 pb-1 text-[10px] font-bold">
-      <button type="button" data-atab="dashboard" onclick="switchTab('dashboard')" class="atab flex flex-col items-center gap-0.5 text-amber-400"><span>📊</span><span>Dashboard</span></button>
-      <button type="button" data-atab="content" onclick="switchTab('content')" class="atab flex flex-col items-center gap-0.5 text-zinc-400"><span>🎬</span><span>Konten</span></button>
-      <button type="button" data-atab="drive" onclick="switchTab('drive')" class="atab flex flex-col items-center gap-0.5 text-zinc-400"><span>☁️</span><span>Drive</span></button>
-      <button type="button" data-atab="commerce" onclick="switchTab('commerce')" class="atab flex flex-col items-center gap-0.5 text-zinc-400"><span>🎟️</span><span>VIP/User</span></button>
-      <button type="button" data-atab="system" onclick="switchTab('system')" class="atab flex flex-col items-center gap-0.5 text-zinc-400"><span>⚙️</span><span>Sistem</span></button>
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-[#121212]/96 backdrop-blur-xl border-t border-white/10 safe-bottom">
+    <div class="max-w-xl mx-auto grid grid-cols-4 pt-2 pb-1 text-[10px] font-semibold">
+      <button type="button" data-btab="home" onclick="switchAppTab('home')" class="btab flex flex-col items-center gap-0.5 text-white">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span data-i18n="navHome">Beranda</span>
+      </button>
+      <button type="button" data-btab="new" onclick="switchAppTab('new')" class="btab flex flex-col items-center gap-0.5 text-zinc-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3V9z"/></svg>
+        <span data-i18n="navNew">Baru &amp; Populer</span>
+      </button>
+      <button type="button" data-btab="search" onclick="switchAppTab('search')" class="btab flex flex-col items-center gap-0.5 text-zinc-500">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+        <span data-i18n="navSearch">Cari</span>
+      </button>
+      <button type="button" data-btab="profile" onclick="switchAppTab('profile')" class="btab flex flex-col items-center gap-0.5 text-zinc-500">
+        <div id="bottomNavMiniAvatar" class="w-5 h-5 rounded bg-[var(--brand-accent)] text-[10px] font-black text-white flex items-center justify-center">A</div>
+        <span data-i18n="navMe">Saya</span>
+      </button>
     </div>
   </nav>
 
-  <div id="admToast" class="fixed top-20 left-1/2 -translate-x-1/2 z-[200] w-[92%] max-w-sm space-y-2 pointer-events-none"></div>
+  <!-- ============================================================
+       7. GENRE PICKER MODAL (NETFLIX CATEGORY OVERLAY)
+       ============================================================ -->
+  <div id="genreModal" class="hidden fixed inset-0 z-[95] bg-black/92 backdrop-blur-xl flex flex-col items-center justify-center p-6">
+    <div id="genreListBox" class="w-full max-w-xs space-y-3 text-center max-h-[75vh] overflow-y-auto no-scrollbar"></div>
+    <button type="button" onclick="closeOverlay('genreModal')" class="mt-6 w-12 h-12 rounded-full bg-white text-black font-black text-lg">✕</button>
+  </div>
+
+  <!-- ============================================================
+       8. DETAIL SHEET (NETFLIX MOBILE DETAIL + IN-APP VAULT SAVE)
+       ============================================================ -->
+  <div id="detailSheet" class="hidden fixed inset-0 z-[80] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center" onclick="if(event.target===this) closeOverlay('detailSheet')">
+    <div class="w-full max-w-xl bg-[#141416] rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/15 max-h-[93vh] overflow-y-auto no-scrollbar">
+      <div id="detailSheetBody"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       9. 100% NETFLIX FULLSCREEN VIDEO PLAYER
+          (PANGKAS, KECEPATAN, LAYAR KUNCI/BUKA KUNCI, PENCAHAYAAN,
+           EPISODE, AUDIO & SUBTITLE + UPLOAD .ASS/.SRT/.VTT, EPS. BERIKUTNYA)
+       ============================================================ -->
+  <div id="playerSheet" class="hidden fixed inset-0 z-[110] bg-black flex flex-col overflow-hidden" oncontextmenu="return false;">
+    <div id="nfPlayerRoot" class="relative flex-1 w-full h-full bg-black overflow-hidden flex items-center justify-center" onclick="handlePlayerTap(event)">
+
+      <!-- Video Media Layer (Anti Direct Download) -->
+      <div id="nfMediaLayer" class="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
+        <!-- Real Google Drive Embed Layer (if GDrive ID & not HLS) -->
+        <iframe id="plIframe" src="" class="hidden w-full h-full border-0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+
+        <!-- HTML5 / HLS Video Element (Anti-Download protected) -->
+        <video id="plVideo" class="hidden w-full h-full crop-fit bg-black" playsinline crossorigin="anonymous" controlslist="nodownload noplaybackrate" disablepictureinpicture="false"></video>
+
+        <!-- Interactive Demo Stage (for DEMO_* IDs) -->
+        <div id="plDemoBackdrop" class="hidden absolute inset-0 w-full h-full">
+          <div id="plDemoArt" class="absolute inset-0 opacity-65"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/60"></div>
+        </div>
+      </div>
+
+      <!-- Brightness Dimmer Overlay -->
+      <div id="nfBrightOverlay" class="pointer-events-none absolute inset-0 bg-black z-10" style="opacity:0;"></div>
+
+      <!-- Dual Subtitle Live Overlay (Supports .ass, .ssa, .srt, .vtt, .sbv, .sub, .txt) -->
+      <div id="nfSubOverlay" class="pointer-events-none absolute left-4 right-4 z-20 flex flex-col items-center gap-1 text-center transition-all" style="bottom:86px;">
+        <div id="nfSubTop" dir="rtl" class="font-arabic font-bold px-3 py-1 rounded-md max-w-[94%] leading-snug" style="display:none;"></div>
+        <div id="nfSubBot" class="font-sans font-semibold px-3 py-1 rounded-md max-w-[94%] leading-snug" style="display:none;"></div>
+      </div>
+
+      <!-- Crop Mode Visual Badge Feedback -->
+      <div id="nfHudToast" class="hidden pointer-events-none absolute top-16 left-1/2 -translate-x-1/2 z-40 px-4 py-1.5 rounded-full bg-black/80 border border-white/20 text-xs font-extrabold text-white"></div>
+
+      <!-- Skip Intro Button -->
+      <button type="button" id="nfSkipIntroBtn" onclick="event.stopPropagation(); skipIntroNow();" class="hidden absolute right-4 bottom-24 z-30 px-4 py-2 rounded-lg bg-white text-black font-extrabold text-xs shadow-2xl">Lewati Intro ›</button>
+
+      <!-- LOCKED SCREEN OVERLAY (LAYAR KUNCI / BUKA KUNCI KONTROL) -->
+      <div id="nfLockOverlay" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-end pb-10" onclick="event.stopPropagation(); showUnlockPrompt();">
+        <div id="nfLockPill" class="px-5 py-2.5 rounded-full bg-black/80 border border-white/25 text-white text-xs font-bold flex items-center gap-2 shadow-2xl">
+          <span>🔒</span>
+          <span>Layar Terkunci — Ketuk untuk Buka</span>
+        </div>
+        <button type="button" id="nfUnlockConfirmBtn" onclick="event.stopPropagation(); togglePlayerLock(false);" class="hidden mt-3 px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs shadow-2xl">
+          🔓 Buka Kunci Kontrol?
+        </button>
+      </div>
+
+      <!-- FULL NETFLIX HUD CONTROLS OVERLAY -->
+      <div id="nfHudControls" class="absolute inset-0 z-30 bg-gradient-to-b from-black/80 via-black/15 to-black/90 flex flex-col justify-between p-3.5 sm:p-5 transition-opacity duration-300">
+
+        <!-- TOP BAR: Back, Title & Episode, Fullscreen/Orientation -->
+        <div class="safe-top flex items-center justify-between gap-3" onclick="event.stopPropagation()">
+          <button type="button" onclick="closePlayer()" class="w-10 h-10 rounded-full bg-black/40 hover:bg-white/20 flex items-center justify-center text-white text-xl font-bold shrink-0">←</button>
+          <div class="flex-1 text-center min-w-0 px-2">
+            <h3 id="plTitle" class="text-xs sm:text-sm font-extrabold text-white truncate">Judul Anime</h3>
+            <p id="plSub" class="text-[10px] sm:text-xs text-zinc-300 truncate">S1:E1 · Episode 1</p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick="togglePlayerSourceMode()" id="plSrcBadgeBtn" class="px-2.5 py-1.5 rounded-lg bg-white/15 text-[10px] font-bold text-amber-300">GDrive/HLS</button>
+            <button type="button" onclick="toggleFullscreenAndRotate()" class="w-9 h-9 rounded-full bg-black/40 hover:bg-white/20 flex items-center justify-center text-white text-xs font-bold" title="Layar Penuh">⛶</button>
+          </div>
+        </div>
+
+        <!-- MIDDLE ROW: Left Brightness Slider + Center Play/Skip Controls -->
+        <div class="relative flex items-center justify-center flex-1 my-2">
+          <!-- Left Vertical Brightness Slider (Pencahayaan) -->
+          <div class="absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 bg-black/50 backdrop-blur-md px-2 py-3 rounded-2xl border border-white/10" onclick="event.stopPropagation()">
+            <span class="text-sm">☀️</span>
+            <input id="nfBrightnessSlider" type="range" min="30" max="150" value="100" oninput="setPlayerBrightness(this.value)" class="h-28 accent-white cursor-pointer" style="writing-mode:vertical-lr; direction:rtl; width:18px;" aria-label="Pencahayaan" />
+            <span id="nfBrightVal" class="text-[9px] font-mono text-zinc-300">100%</span>
+          </div>
+
+          <!-- Center Netflix Transport Controls -->
+          <div class="flex items-center gap-7 sm:gap-12" onclick="event.stopPropagation()">
+            <button type="button" onclick="skipSeconds(-10)" class="w-12 h-12 rounded-full bg-black/40 active:scale-90 flex flex-col items-center justify-center text-white">
+              <span class="text-lg leading-none">↺</span><span class="text-[9px] font-bold">10</span>
+            </button>
+            <button type="button" id="nfBigPlayBtn" onclick="togglePlayPause()" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/55 border-2 border-white/80 active:scale-90 flex items-center justify-center text-white text-3xl shadow-2xl">
+              ❚❚
+            </button>
+            <button type="button" onclick="skipSeconds(10)" class="w-12 h-12 rounded-full bg-black/40 active:scale-90 flex flex-col items-center justify-center text-white">
+              <span class="text-lg leading-none">↻</span><span class="text-[9px] font-bold">10</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- BOTTOM BAR: Netflix Red Seekbar + 6 Exact Fullscreen Action Buttons -->
+        <div class="space-y-3 safe-bottom" onclick="event.stopPropagation()">
+          <div class="flex items-center gap-3">
+            <input id="nfSeekBar" type="range" min="0" max="100" step="0.1" value="10" oninput="seekToPercent(this.value)" class="nf-seek flex-1 cursor-pointer" />
+            <span id="nfTimeRemain" class="text-[11px] font-mono text-zinc-200 shrink-0">-21:36</span>
+          </div>
+
+          <!-- Exact Netflix Fullscreen Action Row -->
+          <div class="grid grid-cols-6 gap-1 text-[10px] sm:text-xs font-semibold text-zinc-100">
+            <button type="button" onclick="cycleCropMode()" class="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-white/10 active:scale-95">
+              <span class="text-base">⤢</span><span id="nfCropLabel">Pangkas</span>
+            </button>
+            <button type="button" onclick="openPlayerSubPanel('speed')" class="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-white/10 active:scale-95">
+              <span class="text-base">⚡</span><span id="nfSpeedLabel">Kecepatan (1x)</span>
+            </button>
+            <button type="button" onclick="togglePlayerLock(true)" class="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-white/10 active:scale-95">
+              <span class="text-base">🔓</span><span>Kunci</span>
+            </button>
+            <button type="button" onclick="openPlayerSubPanel('episodes')" class="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-white/10 active:scale-95">
+              <span class="text-base">▤</span><span>Episode</span>
+            </button>
+            <button type="button" onclick="openPlayerSubPanel('audioSub')" class="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-white/10 active:scale-95">
+              <span class="text-base">💬</span><span>Audio &amp; Sub</span>
+            </button>
+            <button type="button" onclick="playNextEp()" class="flex flex-col items-center gap-1 py-1.5 rounded-xl hover:bg-white/10 active:scale-95">
+              <span class="text-base">⏭</span><span>Eps. Berikutnya</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- IN-PLAYER SUB-PANELS (SPEED / EPISODES / AUDIO & SUBTITLE + UPLOAD) -->
+      <div id="nfSubPanelBackdrop" class="hidden absolute inset-0 z-40 bg-black/85 backdrop-blur-md flex items-center justify-center p-4" onclick="event.stopPropagation(); closePlayerSubPanel();">
+        <div id="nfSubPanelCard" class="w-full max-w-lg bg-[#16161a] border border-white/15 rounded-2xl p-4 sm:p-5 max-h-[85vh] overflow-y-auto no-scrollbar space-y-4" onclick="event.stopPropagation()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       10. NETFLIX-STYLE VIP SUBSCRIPTION & AUTO QRIS/TF PAYMENT SHEET
+       ============================================================ -->
+  <div id="vipSheet" class="hidden fixed inset-0 z-[90] bg-black/88 backdrop-blur-md flex items-end sm:items-center justify-center" onclick="if(event.target===this) closeOverlay('vipSheet')">
+    <div class="w-full max-w-xl bg-[#141418] rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/15 p-5 space-y-4 max-h-[92vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-black text-[var(--brand-accent)] uppercase tracking-widest">LANGGANAN ANIMEDUBAR VIP</span>
+          <h3 class="text-lg font-black text-white">Pilih Paket &amp; Aktif Otomatis</h3>
+        </div>
+        <button type="button" onclick="closeOverlay('vipSheet')" class="w-8 h-8 rounded-full bg-white/10 text-white font-bold">✕</button>
+      </div>
+      <p id="vipLockReason" class="hidden p-2.5 rounded-xl bg-red-600/20 border border-red-500/40 text-xs text-red-200"></p>
+
+      <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+        <button type="button" onclick="switchVipTab('plans')" id="vtabPlans" class="py-2 rounded-xl bg-[var(--brand-accent)] text-white">Bayar QRIS / Transfer</button>
+        <button type="button" onclick="switchVipTab('voucher')" id="vtabVoucher" class="py-2 rounded-xl bg-white/10 text-zinc-200">Kode Voucher VIP</button>
+      </div>
+
+      <!-- TAB 1: NETFLIX-STYLE 3-STEP CHECKOUT (QRIS / TF -> AUTO VIP) -->
+      <div id="vipPanePlans" class="space-y-4 text-xs">
+        <div id="vipStep1Select" class="space-y-3">
+          <p class="text-[11px] font-bold text-zinc-400">LANGKAH 1 DARI 2 · PILIH PAKET &amp; METODE PEMBAYARAN</p>
+          <div id="vipPlansList" class="space-y-2"></div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button type="button" onclick="selectPayMethod('QRIS')" id="pmBtnQRIS" class="p-3 rounded-xl border border-emerald-400 bg-emerald-500/15 text-left">
+              <p class="font-extrabold text-emerald-300">📱 QRIS Otomatis</p>
+              <p class="text-[10px] text-zinc-300">Dana, OVO, GoPay, m-Banking</p>
+            </button>
+            <button type="button" onclick="selectPayMethod('BANK_TRANSFER')" id="pmBtnTF" class="p-3 rounded-xl border border-white/15 bg-white/5 text-left">
+              <p class="font-extrabold text-white">🏦 Transfer Bank (TF)</p>
+              <p class="text-[10px] text-zinc-400">BCA / BSI / BRI / Mandiri</p>
+            </button>
+          </div>
+
+          <input id="vipPromoInput" type="text" placeholder="Kode Promo (Opsional, cth: ARAB20)" oninput="this.value=this.value.toUpperCase()" class="w-full bg-black border border-white/15 rounded-xl px-3.5 py-2.5 font-mono text-amber-300 uppercase" />
+
+          <button type="button" onclick="createAutomatedPaymentInvoice()" id="btnCreateInvoice" class="w-full py-3.5 rounded-xl bg-[var(--brand-accent)] text-white font-extrabold text-sm shadow-xl">Lanjutkan ke Pembayaran →</button>
+        </div>
+
+        <!-- STEP 2: LIVE PAYMENT SCREEN WITH AUTO-POLLING VIP ACTIVATION -->
+        <div id="vipStep2Pay" class="hidden space-y-3.5">
+          <div class="flex items-center justify-between">
+            <p class="text-[11px] font-bold text-amber-400">LANGKAH 2 DARI 2 · SELESAIKAN PEMBAYARAN</p>
+            <button type="button" onclick="backToStep1Plans()" class="text-zinc-400 underline text-[11px]">← Ubah Paket</button>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-black border border-white/15 space-y-3 text-center">
+            <div class="flex items-center justify-between text-[11px] border-b border-white/10 pb-2">
+              <span class="text-zinc-400">Invoice: <strong id="payInvNo" class="font-mono text-amber-300">-</strong></span>
+              <span id="payStatusPill" class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-black text-[10px]">MENUNGGU</span>
+            </div>
+
+            <div>
+              <p class="text-[11px] text-zinc-400">Total yang Harus Dibayar</p>
+              <p id="payTotalRp" class="text-2xl font-black text-emerald-400 mt-0.5">Rp 0</p>
+              <p id="payPlanSummary" class="text-[11px] text-zinc-300">-</p>
+            </div>
+
+            <!-- QRIS Container -->
+            <div id="payQrisBox" class="hidden flex flex-col items-center gap-2 py-2">
+              <div id="payQrisVisual" class="p-3 rounded-2xl bg-white inline-block shadow-xl"></div>
+              <p class="text-[11px] text-zinc-300">Scan QRIS di atas via Dana, GoPay, OVO, ShopeePay, atau Mobile Banking.</p>
+            </div>
+
+            <!-- Bank Transfer Container -->
+            <div id="payBankBox" class="hidden p-3.5 rounded-xl bg-[#16161c] border border-white/10 text-left space-y-2">
+              <div class="flex justify-between"><span class="text-zinc-400">Bank Tujuan</span><strong id="payBankName" class="text-white">-</strong></div>
+              <div class="flex justify-between items-center"><span class="text-zinc-400">No. Rekening</span><div class="flex items-center gap-2"><strong id="payBankAcc" class="font-mono text-amber-300">-</strong><button type="button" onclick="copyText(document.getElementById('payBankAcc').textContent,'No. Rekening disalin!')" class="px-2 py-0.5 rounded bg-white/15 text-[10px]">Salin</button></div></div>
+              <div class="flex justify-between"><span class="text-zinc-400">Atas Nama</span><strong id="payBankHolder" class="text-white">-</strong></div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-200 flex items-center justify-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="payAutoPollMsg">Mengecek pembayaran otomatis setiap 5 detik... VIP langsung aktif begitu lunas!</span>
+            </div>
+
+            <div class="flex gap-2 pt-1">
+              <input id="payRefInput" type="text" placeholder="No. Referensi / Nama Pengirim TF (opsional)" class="flex-1 bg-[#18181e] border border-white/15 rounded-xl px-3 py-2 text-white text-[11px]" />
+              <button type="button" onclick="submitPaymentProof()" class="px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-bold text-[11px] shrink-0">Sudah Bayar</button>
+            </div>
+            <button type="button" onclick="sendPaymentWaHelp()" class="w-full py-2.5 rounded-xl bg-white/10 text-zinc-200 font-bold text-[11px]">Kirim Bukti ke WhatsApp Admin (Bantuan Cepat)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: REDEEM VOUCHER VIP -->
+      <div id="vipPaneVoucher" class="hidden space-y-3">
+        <div id="activeVoucherBox" class="hidden p-4 rounded-2xl bg-emerald-950/50 border border-emerald-500/40 space-y-2 text-xs">
+          <p class="font-extrabold text-emerald-300">✔ AKSES VIP AKTIF</p>
+          <p id="activeVoucherDetail" class="text-white font-bold"></p>
+          <button type="button" onclick="logoutVoucher()" class="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-200 font-bold">Keluar VIP</button>
+        </div>
+        <form id="voucherForm" onsubmit="redeemVoucher(event)" class="space-y-2.5">
+          <input id="voucherInp" type="text" required placeholder="Masukkan Kode Voucher (cth: DEMO-VIP7)" oninput="this.value=this.value.toUpperCase()" class="w-full bg-black border border-white/15 rounded-xl px-3.5 py-3 font-mono font-bold text-amber-300 uppercase text-sm" />
+          <button type="submit" class="w-full py-3 rounded-xl vip-gradient text-black font-extrabold text-sm">Aktifkan Kode Voucher</button>
+          <p class="text-[11px] text-zinc-400">Kode demo: <button type="button" onclick="document.getElementById('voucherInp').value='DEMO-VIP7'" class="text-amber-300 font-mono underline">DEMO-VIP7</button></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       11. NOTIFICATIONS SHEET & AUTH SHEET
+       ============================================================ -->
+  <div id="notifSheet" class="hidden fixed inset-0 z-[90] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center" onclick="if(event.target===this) closeOverlay('notifSheet')">
+    <div class="w-full max-w-xl bg-[#141418] rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/15 p-5 space-y-3 max-h-[82vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-black text-white">Notifikasi Animedubar</h3>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="markNotifsRead()" class="text-[11px] text-amber-400 font-bold">Tandai Dibaca</button>
+          <button type="button" onclick="closeOverlay('notifSheet')" class="w-8 h-8 rounded-full bg-white/10 text-white font-bold">✕</button>
+        </div>
+      </div>
+      <div id="notifSheetList" class="space-y-2.5"></div>
+    </div>
+  </div>
+
+  <div id="authSheet" class="hidden fixed inset-0 z-[90] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center" onclick="if(event.target===this) closeOverlay('authSheet')">
+    <div class="w-full max-w-xl bg-[#141418] rounded-t-3xl sm:rounded-3xl border-t sm:border border-white/15 p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-black text-white">Masuk Akun Member</h3>
+        <button type="button" onclick="closeOverlay('authSheet')" class="w-8 h-8 rounded-full bg-white/10 text-white font-bold">✕</button>
+      </div>
+      <form onsubmit="submitAppLogin(event)" class="space-y-3 text-xs">
+        <input id="authEmail" type="email" required placeholder="Email Member" class="w-full bg-black border border-white/15 rounded-xl px-3.5 py-3 text-white" />
+        <input id="authPass" type="password" required placeholder="Password" class="w-full bg-black border border-white/15 rounded-xl px-3.5 py-3 text-white" />
+        <button type="submit" class="w-full py-3 rounded-xl bg-[var(--brand-accent)] text-white font-extrabold text-sm">Masuk</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toastBox" class="fixed top-20 left-1/2 -translate-x-1/2 z-[200] w-[92%] max-w-sm space-y-2 pointer-events-none"></div>
 
   <script>
+    /* =========================================================================
+       I18N MULTI-LANGUAGE DICTIONARY (DEFAULT: BAHASA INDONESIA)
+       ========================================================================= */
+    const I18N = {
+      id: {
+        whoWatching: "Siapa yang menonton?", forPrefix: "Untuk",
+        pillAll: "Semua", pillAnime: "Acara Anime", pillMovie: "Film", pillCat: "Kategori",
+        navHome: "Beranda", navNew: "Baru & Populer", navSearch: "Cari", navMe: "Saya",
+        play: "Putar", myList: "Daftar Saya", installTitle: "Instal Aplikasi Animedubar",
+        installDesc: "Layar penuh tanpa browser, notifikasi real-time & penyimpanan in-app.",
+        upgradeVip: "Langganan VIP (QRIS / TF)", offlineVaultTitle: "Unduhan Dalam Aplikasi",
+        languageLabel: "Bahasa Aplikasi", continueFor: "Lanjutkan Menonton untuk",
+        top10Title: "Top 10 di Animedubar Hari Ini", animeRow: "Anime Dubbing Arab Populer",
+        movieRow: "Film & Movie Bahasa Arab", vipRow: "Eksklusif Dual Subtitle VIP"
+      },
+      en: {
+        whoWatching: "Who's watching?", forPrefix: "For",
+        pillAll: "All", pillAnime: "Anime Series", pillMovie: "Movies", pillCat: "Categories",
+        navHome: "Home", navNew: "New & Hot", navSearch: "Search", navMe: "My Profile",
+        play: "Play", myList: "My List", installTitle: "Install Animedubar App",
+        installDesc: "Fullscreen app experience, live alerts & in-app offline vault.",
+        upgradeVip: "Upgrade VIP (QRIS / Bank)", offlineVaultTitle: "In-App Downloads",
+        languageLabel: "App Language", continueFor: "Continue Watching for",
+        top10Title: "Top 10 on Animedubar Today", animeRow: "Popular Arabic Dub Anime",
+        movieRow: "Arabic Movies & Films", vipRow: "Exclusive VIP Dual Subtitle"
+      },
+      ar: {
+        whoWatching: "من يشاهد الآن؟", forPrefix: "لـ",
+        pillAll: "الكل", pillAnime: "مسلسلات أنمي", pillMovie: "أفلام", pillCat: "التصنيفات",
+        navHome: "الرئيسية", navNew: "الجديد والشائع", navSearch: "بحث", navMe: "حسابي",
+        play: "تشغيل", myList: "قائمتي", installTitle: "تثبيت تطبيق أنمي دوبار",
+        installDesc: "شاشة كاملة، إشعارات فورية وحفظ محدود داخل التطبيق.",
+        upgradeVip: "اشتراك VIP (QRIS / تحويل)", offlineVaultTitle: "التنزيلات داخل التطبيق",
+        languageLabel: "لغة التطبيق", continueFor: "متابعة المشاهدة لـ",
+        top10Title: "أفضل 10 على أنمي دوبار اليوم", animeRow: "أنمي مدبلج بالعربية",
+        movieRow: "أفلام عربية مختارة", vipRow: "حصري لأعضاء VIP"
+      }
+    };
+
+    /* =========================================================================
+       CONFIG & STATE
+       ========================================================================= */
+    const DEFAULT_APP_CONFIG = {
+      brandName: "Animedubar",
+      logoUrl: "",
+      faviconUrl: "",
+      themeAccent: "#E50914",
+      defaultLang: "id",
+      whatsappNumber: "6281234567890",
+      backendWebAppUrl: "", // <-- Tempel URL Apps Script https://script.google.com/macros/s/.../exec
+      qrisImageUrl: "",
+      bankName: "BCA / BSI / BRI",
+      bankAccountNumber: "1234567890",
+      bankAccountHolder: "ANIMEDUBAR OFFICIAL",
+      offlineQuotas: { FREE: 0, monthly: 5, quarterly: 15, yearly: 50 },
+      notifPollSeconds: 45,
+      vouchers: [
+        { code: "DEMO-VIP7", planName: "VIP Trial 7 Hari", planId: "monthly", durationDays: 7, status: "ACTIVE" },
+        { code: "ANIMEDUBAR-VIP30", planName: "VIP Bulanan 30 Hari", planId: "monthly", durationDays: 30, status: "ACTIVE" },
+        { code: "ARAB-PRO365", planName: "VIP Tahunan 365 Hari", planId: "yearly", durationDays: 365, status: "ACTIVE" }
+      ],
+      vipPlans: [
+        { id: "monthly", name: "VIP Bulanan", duration: "30 Hari", price: "Rp 29.000", note: "Full HD 1080p · Simpan 5 Eps In-App", quota: 5 },
+        { id: "quarterly", name: "VIP 3 Bulan", duration: "90 Hari", price: "Rp 75.000", note: "Terlaris · Simpan 15 Eps In-App", popular: true, quota: 15 },
+        { id: "yearly", name: "VIP Tahunan", duration: "365 Hari", price: "Rp 249.000", note: "4K HDR · Simpan 50 Eps In-App", quota: 50 }
+      ],
+      catalog: [
+        { id:"conan-ar", title:"Detective Conan (Dub Arab)", arabicTitle:"المحقق كونان - مدبلج عربي", type:"anime", year:2025, rating:"9.4", quality:"HD 1080p", featured:true, topRank:1, isVip:false, genres:["Misteri","Detektif","Dub Arab"], theme:{c1:"#1d4ed8",c2:"#090d1a",accent:"#ef4444"}, synopsis:"Shinichi Kudo berubah menjadi anak kecil akibat racun organisasi hitam. Nikmati dubbing Bahasa Arab klasik yang jernih dengan Dual Subtitle Indonesia & Arab.", seasons:[{seasonNumber:1,title:"Season 1",episodes:[{ep:1,title:"Kasus Roller Coaster",duration:"24 mnt",isVip:false,driveSubId:"DEMO_CONAN_EP1_ID",driveSubAr:"DEMO_CONAN_EP1_AR",driveDual:"DEMO_CONAN_EP1_DUAL"},{ep:2,title:"Putri Presiden yang Hilang",duration:"24 mnt",isVip:false,driveSubId:"DEMO_CONAN_EP2_ID",driveSubAr:"DEMO_CONAN_EP2_AR",driveDual:"DEMO_CONAN_EP2_DUAL"},{ep:3,title:"Rahasia Ruang Terkunci",duration:"24 mnt",isVip:true,driveSubId:"DEMO_CONAN_EP3_ID",driveSubAr:"DEMO_CONAN_EP3_AR",driveDual:"DEMO_CONAN_EP3_DUAL"}]}] },
+        { id:"the-journey-ar", title:"The Journey: Pasukan Gajah", arabicTitle:"الرحلة - فيلم أنمي عربي", type:"movie", year:2024, rating:"9.2", quality:"4K HDR", featured:true, topRank:2, isVip:true, genres:["Sejarah","Epik","Film Arab"], theme:{c1:"#b45309",c2:"#160e06",accent:"#f59e0b"}, synopsis:"Film anime kolaborasi Manga Productions (Arab Saudi) & Toei Animation tentang keberanian penduduk Makkah mempertahankan kota suci.", seasons:[{seasonNumber:1,title:"Full Movie",episodes:[{ep:1,title:"The Journey Full Movie HD",duration:"1 jam 50 mnt",isVip:true,driveSubId:"DEMO_JOURNEY_ID",driveSubAr:"DEMO_JOURNEY_AR",driveDual:"DEMO_JOURNEY_DUAL"}]}] },
+        { id:"hxh-ar", title:"Hunter x Hunter (Al-Qannas)", arabicTitle:"القناص - مدبلج بالعربية", type:"anime", year:2025, rating:"9.5", quality:"HD 1080p", featured:true, topRank:3, isVip:false, genres:["Aksi","Petualangan","Fantasi"], theme:{c1:"#047857",c2:"#061410",accent:"#34d399"}, synopsis:"Perjalanan Gon Freecss mengikuti Ujian Hunter dalam versi Al-Qannas dengan dubbing Arab fusha terbaik.", seasons:[{seasonNumber:1,title:"Season 1",episodes:[{ep:1,title:"Keberangkatan dan Sahabat Baru",duration:"24 mnt",isVip:false,driveSubId:"DEMO_HXH_EP1_ID",driveSubAr:"DEMO_HXH_EP1_AR",driveDual:"DEMO_HXH_EP1_DUAL"},{ep:2,title:"Ujian di Hutan Kabut",duration:"24 mnt",isVip:true,driveSubId:"DEMO_HXH_EP2_ID",driveSubAr:"DEMO_HXH_EP2_AR",driveDual:"DEMO_HXH_EP2_DUAL"}]}] },
+        { id:"bilal-movie-ar", title:"Bilal: A New Breed of Hero", arabicTitle:"بلال - فيلم أنيميشن عربي", type:"movie", year:2024, rating:"9.3", quality:"HD 1080p", featured:false, topRank:4, isVip:false, genres:["Biografi","Sejarah","Keluarga"], theme:{c1:"#92400e",c2:"#140c06",accent:"#fbbf24"}, synopsis:"Kisah inspiratif Bilal bin Rabah memperjuangkan kebebasan dan keadilan dengan Dual Subtitle ID & AR.", seasons:[{seasonNumber:1,title:"Full Movie",episodes:[{ep:1,title:"Bilal Full Movie",duration:"1 jam 45 mnt",isVip:false,driveSubId:"DEMO_BILAL_ID",driveSubAr:"DEMO_BILAL_AR",driveDual:"DEMO_BILAL_DUAL"}]}] },
+        { id:"demon-slayer-ar", title:"Kimetsu no Yaiba (Dub Arab)", arabicTitle:"قاتل الشياطين - مدبلج", type:"anime", year:2026, rating:"9.4", quality:"4K HDR", featured:false, topRank:5, isVip:true, genres:["Aksi","Pedang","Fantasi"], theme:{c1:"#be123c",c2:"#18070d",accent:"#fb7185"}, synopsis:"Tanjiro Kamado membasmi iblis demi menyelamatkan adiknya Nezuko dengan audio dubbing Bahasa Arab kualitas studio.", seasons:[{seasonNumber:1,title:"Season 1",episodes:[{ep:1,title:"Kekejaman di Gunung Salju",duration:"24 mnt",isVip:true,driveSubId:"DEMO_KNY_EP1_ID",driveSubAr:"DEMO_KNY_EP1_AR",driveDual:"DEMO_KNY_EP1_DUAL"}]}] },
+        { id:"aot-ar", title:"Attack on Titan (Dub Arab)", arabicTitle:"هجوم العمالقة - مدبلج عربي", type:"anime", year:2025, rating:"9.6", quality:"HD 1080p", featured:false, topRank:6, isVip:true, genres:["Aksi","Drama","Thriller"], theme:{c1:"#7f1d1d",c2:"#100d12",accent:"#ef4444"}, synopsis:"Kisah epik Eren Yeager mempertahankan umat manusia di balik tembok raksasa dengan dubbing Arab penuh penghayatan.", seasons:[{seasonNumber:1,title:"Season 1",episodes:[{ep:1,title:"Untukmu 2000 Tahun Lagi",duration:"25 mnt",isVip:true,driveSubId:"DEMO_AOT_EP1_ID",driveSubAr:"DEMO_AOT_EP1_AR",driveDual:"DEMO_AOT_EP1_DUAL"}]}] }
+      ]
+    };
+
+    const DEMO_SUBS = [
+      { start:0, end:8, ar:"مرحباً بكم في تطبيق أنمي دوبار — تجربة نتفليكس كاملة", id:"Selamat datang di Aplikasi Animedubar — Tampilan 100% Netflix" },
+      { start:8, end:16, ar:"الحقيقة دائماً واحدة مهما كانت الألغاز معقدة!", id:"Kebenaran selalu hanya satu, serumit apa pun misterinya!" },
+      { start:16, end:24, ar:"يمكنك رفع ملفات الترجمة .ASS و .SRT و .VTT مباشرة من المشغل!", id:"Anda bisa upload subtitle .ASS, .SRT, .VTT langsung dari pemutar!" },
+      { start:24, end:32, ar:"جرّب خيارات القص والسرعة وقفل الشاشة والإضاءة بسهولة.", id:"Coba fitur Pangkas, Kecepatan, Kunci Layar & Pencahayaan sekarang." }
+    ];
+
     const lsGet = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } };
     const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
     const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-    const RBAC = {
-      SUPER_ADMIN: ['*'],
-      CONTENT_ADMIN: ['dashboard','content'],
-      VIDEO_MANAGER: ['dashboard','drive'],
-      MEMBERSHIP_ADMIN: ['dashboard','commerce'],
-      FINANCE_ADMIN: ['dashboard','commerce'],
-      MODERATOR: ['dashboard','commerce','system'],
-      ANALYTICS_VIEWER: ['dashboard']
-    };
-
-    const st = {
-      gasUrl: lsGet('adbr_adm_gas_v5', ''),
-      session: lsGet('adbr_adm_sess_v5', null),
-      pinHash: lsGet('adbr_adm_pin_v5', ''),
-      tab: 'dashboard',
-      period: 'month',
-      cmsFilter: 'ALL',
-      subTabCommerce: 'vouchers',
+    const app = {
+      config: Object.assign({}, DEFAULT_APP_CONFIG, lsGet('adbr_mob_cfg_v6', DEFAULT_APP_CONFIG)),
+      lang: lsGet('adbr_mob_lang_v6', 'id'),
+      profile: lsGet('adbr_mob_prof_v6', { name:'Utama', subMode:'dual', color:'#E50914', badge:'A' }),
+      tab: 'home',
+      homePill: 'all',
+      activeGenre: 'all',
+      newTab: 'hot',
+      myList: lsGet('adbr_mob_list_v6', ['conan-ar', 'the-journey-ar']),
+      continueList: lsGet('adbr_mob_cw_v6', [{ itemId:'conan-ar', sIdx:0, eIdx:0, pct:58 }]),
+      voucher: lsGet('adbr_mob_voucher_v6', null),
+      member: lsGet('adbr_mob_member_v6', null),
+      notifs: lsGet('adbr_mob_notifs_v6', [
+        { id:'n-welcome', category:'INFO', title:'Selamat Datang di Animedubar App!', body:'Aktifkan Notifikasi HP agar langsung tahu saat anime/episode terbaru diupload.', read:false, createdAt:Date.now() }
+      ]),
+      seenNotifIds: lsGet('adbr_mob_seen_ntf_v6', ['n-welcome']),
+      selectedPlanId: 'quarterly',
+      payMethod: 'QRIS',
+      activeInvoice: null,
+      payPollTimer: null,
+      notifPollTimer: null,
       deferredInstall: null,
-      lastActivity: Date.now(),
-      data: lsGet('adbr_adm_cache_v5', {
-        catalog: [], episodes: [], vouchers: [], users: [], transactions: [],
-        promos: [], videoJobs: [], driveLogs: [], auditLogs: [], notifications: []
-      })
+      player: {
+        itemId:null, sIdx:0, eIdx:0, server:'driveSubId', sourceMode:'auto',
+        hls:null, playing:true, demoSec:12, demoDur:1440, demoTimer:null,
+        hudVisible:true, hudTimer:null, locked:false, cropIdx:0, speed:1,
+        brightness:100, audioTrack:'ar', subMode:'dual', subSize:16, subPos:86, subOffsetMs:0,
+        customSubs: { id:[], ar:[] }, lastTapTime:0
+      }
     };
 
-    function toast(msg, type='info') {
-      const box = document.getElementById('admToast');
-      const cls = type==='ok' ? 'bg-emerald-600 text-white' : type==='err' ? 'bg-red-600 text-white' : 'bg-amber-500 text-black';
-      const el = document.createElement('div');
-      el.className = `px-4 py-2.5 rounded-2xl text-xs font-extrabold shadow-2xl text-center ${cls}`;
-      el.textContent = msg;
-      box.appendChild(el);
-      setTimeout(() => el.remove(), 3400);
+    const t = (key) => (I18N[app.lang] && I18N[app.lang][key]) || I18N.id[key] || key;
+
+    /* =========================================================================
+       ISOLATED IN-APP OFFLINE VAULT (INDEXEDDB — APP ONLY, NEVER IN PHONE GALLERY)
+       ========================================================================= */
+    const VAULT_DB_NAME = 'AnimedubarSecureVault_v1';
+    const VAULT_STORE = 'encrypted_episodes';
+
+    function openVaultDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(VAULT_DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(VAULT_STORE)) {
+            db.createObjectStore(VAULT_STORE, { keyPath: 'key' });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
     }
 
-    function copyText(text, msg) {
+    function xorObfuscate(str, keySeed = 'ADBR-APP-ONLY-LOCK') {
+      let out = '';
+      for (let i = 0; i < str.length; i++) {
+        out += String.fromCharCode(str.charCodeAt(i) ^ keySeed.charCodeAt(i % keySeed.length));
+      }
+      return btoa(unescape(encodeURIComponent(out)));
+    }
+
+    async function vaultListAll() {
+      try {
+        const db = await openVaultDb();
+        return await new Promise((resolve) => {
+          const tx = db.transaction(VAULT_STORE, 'readonly');
+          const req = tx.objectStore(VAULT_STORE).getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => resolve([]);
+        });
+      } catch { return []; }
+    }
+
+    function getUserOfflineQuota() {
+      const q = app.config.offlineQuotas || { FREE: 0, monthly: 5, quarterly: 15, yearly: 50 };
+      if (!hasVip()) return Number(q.FREE || 0);
+      const pid = String((app.voucher && app.voucher.planId) || (app.member && app.member.planId) || 'monthly').toLowerCase();
+      if (pid.includes('year')) return Number(q.yearly || 50);
+      if (pid.includes('quarter') || pid.includes('3')) return Number(q.quarterly || 15);
+      return Number(q.monthly || 5);
+    }
+
+    async function saveEpisodeToInAppVault(itemId, sIdx, eIdx) {
+      const quota = getUserOfflineQuota();
+      if (quota <= 0) {
+        openVipCheckoutSheet('plans', 'Penyimpanan Offline Dalam Aplikasi khusus Member VIP (tidak bisa disimpan ke penyimpanan HP).');
+        return;
+      }
+      const existing = await vaultListAll();
+      const key = `${itemId}:${sIdx}:${eIdx}`;
+      if (existing.some(x => x.key === key)) {
+        toast('Episode ini sudah tersimpan aman di dalam Aplikasi Animedubar!', 'info');
+        return;
+      }
+      if (existing.length >= quota) {
+        toast(`Kuota penyimpanan dalam aplikasi penuh (${existing.length}/${quota} Eps). Hapus salah satu atau upgrade paket VIP.`, 'error');
+        return;
+      }
+      const it = (app.config.catalog || []).find(c => c.id === itemId);
+      const ep = it && it.seasons[sIdx] && it.seasons[sIdx].episodes[eIdx];
+      if (!it || !ep) return;
+
+      const expAt = (app.voucher && app.voucher.expiresAt) || (app.member && Date.parse(app.member.vipExpiresAt)) || (Date.now() + 30 * 86400000);
+      const sealedPayload = xorObfuscate(JSON.stringify({ driveSubId: ep.driveSubId, driveSubAr: ep.driveSubAr, hlsUrl: ep.hlsUrl || '' }));
+      const rec = {
+        key, itemId, sIdx, eIdx,
+        title: it.title, arabicTitle: it.arabicTitle,
+        epNum: ep.ep, epTitle: ep.title, duration: ep.duration,
+        savedAt: Date.now(), expiresAt: expAt,
+        sizeMb: Math.floor(140 + Math.random() * 90),
+        sealed: sealedPayload
+      };
+      const db = await openVaultDb();
+      await new Promise((resolve) => {
+        const tx = db.transaction(VAULT_STORE, 'readwrite');
+        tx.objectStore(VAULT_STORE).put(rec);
+        tx.oncomplete = resolve;
+      });
+      toast(`Disimpan di Ruang Aman Aplikasi (${existing.length + 1}/${quota} Eps) — hanya bisa diputar di dalam Animedubar!`, 'vip');
+      renderOfflineVaultUI();
+    }
+
+    async function deleteFromVault(key) {
+      const db = await openVaultDb();
+      await new Promise((resolve) => {
+        const tx = db.transaction(VAULT_STORE, 'readwrite');
+        tx.objectStore(VAULT_STORE).delete(key);
+        tx.oncomplete = resolve;
+      });
+      toast('Dihapus dari penyimpanan dalam aplikasi.', 'info');
+      renderOfflineVaultUI();
+    }
+
+    async function renderOfflineVaultUI() {
+      const listEl = document.getElementById('offlineVaultList');
+      const sumEl = document.getElementById('offlineQuotaSummary');
+      const barEl = document.getElementById('offlineQuotaBar');
+      if (!listEl) return;
+
+      const items = await vaultListAll();
+      const quota = getUserOfflineQuota();
+      const valid = items.filter(x => !x.expiresAt || Date.now() < x.expiresAt);
+      if (sumEl) sumEl.textContent = `${valid.length} / ${quota} Episode · Hanya tonton di dalam aplikasi`;
+      if (barEl) barEl.style.width = quota > 0 ? Math.min(100, Math.round((valid.length / quota) * 100)) + '%' : '0%';
+
+      if (!valid.length) {
+        listEl.innerHTML = `<p class="text-[11px] text-zinc-500 text-center py-3">${quota > 0 ? 'Belum ada episode tersimpan. Klik ikon ⬇ di halaman detail episode.' : 'Upgrade ke VIP untuk membuka kuota simpan tonton di dalam aplikasi.'}</p>`;
+        return;
+      }
+      listEl.innerHTML = valid.map(v => `
+        <div class="p-2.5 rounded-xl bg-black/70 border border-white/10 flex items-center justify-between gap-2 text-xs">
+          <div onclick="openPlayer('${esc(v.itemId)}',${v.sIdx},${v.eIdx})" class="min-w-0 flex-1 cursor-pointer">
+            <p class="font-bold text-white truncate">${esc(v.title)} · Eps ${v.epNum}</p>
+            <p class="text-[10px] text-blue-300 truncate">🔒 In-App Vault · ~${v.sizeMb} MB · ${esc(v.epTitle)}</p>
+          </div>
+          <button type="button" onclick="deleteFromVault('${esc(v.key)}')" class="px-2.5 py-1 rounded-lg bg-red-600/20 text-red-300 text-[10px] font-bold shrink-0">Hapus</button>
+        </div>`).join('');
+    }
+
+    /* =========================================================================
+       UNIVERSAL SUBTITLE PARSER (.ASS, .SSA, .SRT, .VTT, .SBV, .SUB, .TXT)
+       ========================================================================= */
+    function parseSubTime(raw) {
+      const s = String(raw || '').trim().replace(',', '.');
+      const parts = s.split(':').map(Number);
+      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      if (parts.length === 2) return parts[0] * 60 + parts[1];
+      return Number(s) || 0;
+    }
+
+    function parseUniversalSubtitle(rawText, fileName = '') {
+      const txt = String(rawText || '').replace(/^\uFEFF/, '').replace(/\r/g, '');
+      const ext = String(fileName || '').toLowerCase();
+      const cues = [];
+
+      // 1. ASS / SSA
+      if (ext.endsWith('.ass') || ext.endsWith('.ssa') || (/\[Events\]/i.test(txt) && /Dialogue:/i.test(txt))) {
+        txt.split('\n').forEach(line => {
+          if (!/^Dialogue:/i.test(line)) return;
+          const cols = line.replace(/^Dialogue:\s*/i, '').split(',');
+          if (cols.length >= 10) {
+            const start = parseSubTime(cols[1]);
+            const end = parseSubTime(cols[2]);
+            const text = cols.slice(9).join(',').replace(/\{[^}]*\}/g, '').replace(/\\N|\\n/g, '\n').trim();
+            if (text) cues.push({ start, end, text });
+          }
+        });
+        return cues.sort((a,b) => a.start - b.start);
+      }
+
+      // 2. MicroDVD .sub ({startFrame}{endFrame}Text)
+      if (/^\{\d+\}\{\d+\}/m.test(txt)) {
+        const fps = 23.976;
+        txt.split('\n').forEach(line => {
+          const m = line.match(/^\{(\d+)\}\{(\d+)\}(.+)$/);
+          if (m) cues.push({ start: Number(m[1]) / fps, end: Number(m[2]) / fps, text: m[3].replace(/\|/g, '\n').trim() });
+        });
+        return cues;
+      }
+
+      // 3. YouTube .sbv (0:00:01.000,0:00:04.000)
+      if (ext.endsWith('.sbv') || /^\d+:\d{2}:\d{2}\.\d+,\d+:\d{2}:\d{2}\.\d+/m.test(txt)) {
+        txt.split(/\n\n+/).forEach(block => {
+          const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+          const m = lines[0] && lines[0].match(/([0-9:.]+),([0-9:.]+)/);
+          if (m && lines.length > 1) {
+            cues.push({ start: parseSubTime(m[1]), end: parseSubTime(m[2]), text: lines.slice(1).join('\n') });
+          }
+        });
+        return cues;
+      }
+
+      // 4. LRC / Timestamped .txt ([00:12.34]Text)
+      if (/^\[\d{2}:\d{2}/m.test(txt)) {
+        const arr = [];
+        txt.split('\n').forEach(line => {
+          const m = line.match(/^\[(\d{2}:\d{2}(?:[.:]\d+)?)\](.+)$/);
+          if (m) arr.push({ start: parseSubTime(m[1]), text: m[2].trim() });
+        });
+        arr.forEach((c, i) => cues.push({ start: c.start, end: (arr[i+1] ? arr[i+1].start : c.start + 5), text: c.text }));
+        return cues;
+      }
+
+      // 5. Standard SRT & WebVTT (.srt, .vtt)
+      txt.split(/\n\n+/).forEach(block => {
+        const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+        const tIdx = lines.findIndex(l => l.includes('-->'));
+        if (tIdx === -1) return;
+        const m = lines[tIdx].match(/([0-9:.,]+)\s*-->\s*([0-9:.,]+)/);
+        if (!m) return;
+        const text = lines.slice(tIdx + 1).join('\n').replace(/<[^>]+>/g, '').trim();
+        if (text) cues.push({ start: parseSubTime(m[1]), end: parseSubTime(m[2]), text });
+      });
+      return cues.sort((a,b) => a.start - b.start);
+    }
+
+    function handleDirectSubUpload(evt, targetLang) {
+      const file = evt.target.files && evt.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const parsed = parseUniversalSubtitle(reader.result, file.name);
+        if (!parsed.length) {
+          toast('Format subtitle tidak terbaca. Pastikan file .ass/.srt/.vtt/.ssa/.sbv valid.', 'error');
+          return;
+        }
+        app.player.customSubs[targetLang] = parsed;
+        if (app.player.subMode === 'off') app.player.subMode = 'dual';
+        toast(`Subtitle ${targetLang.toUpperCase()} "${file.name}" (${parsed.length} baris) aktif!`, 'vip');
+        renderPlayerSubtitles();
+        openPlayerSubPanel('audioSub');
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    /* =========================================================================
+       BRANDING, LANGUAGE & NOTIFICATIONS ENGINE
+       ========================================================================= */
+    function applyDynamicBranding() {
+      const c = app.config;
+      const accent = c.themeAccent || '#E50914';
+      document.documentElement.style.setProperty('--brand-accent', accent);
+      const brand = c.brandName || 'Animedubar';
+      document.title = `${brand} — Streaming Anime & Film Dubbing Arab`;
+      document.getElementById('splashBrandName').textContent = brand.toUpperCase();
+      document.getElementById('gateBrandName').textContent = brand.toUpperCase();
+
+      if (c.logoUrl) {
+        const imgTag = `<img src="${esc(c.logoUrl)}" alt="${esc(brand)}" class="w-full h-full object-contain"/>`;
+        document.getElementById('topBrandLogoBox').innerHTML = imgTag;
+        document.getElementById('splashLogoWrap').innerHTML = imgTag;
+      }
+      if (c.faviconUrl) {
+        document.getElementById('dynFavicon').href = c.faviconUrl;
+        document.getElementById('dynAppleIcon').href = c.faviconUrl;
+      }
+    }
+
+    function setAppLanguage(lang) {
+      app.lang = I18N[lang] ? lang : 'id';
+      lsSet('adbr_mob_lang_v6', app.lang);
+      document.documentElement.setAttribute('lang', app.lang);
+      applyTranslations();
+      renderAll();
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const k = el.getAttribute('data-i18n');
+        if (k) el.textContent = t(k);
+      });
+      const sel = document.getElementById('appLangSelect');
+      if (sel) sel.value = app.lang;
+    }
+
+    function hasVip() {
+      const vOk = app.voucher && app.voucher.expiresAt && Date.now() < Number(app.voucher.expiresAt);
+      const mOk = app.member && app.member.isVipActive;
+      return Boolean(vOk || mOk);
+    }
+
+    function toast(msg, type='info') {
+      const box = document.getElementById('toastBox');
+      const cls = type === 'vip' ? 'bg-amber-500 text-black font-extrabold' : type === 'error' ? 'bg-red-600 text-white font-bold' : 'bg-[#1c1c22] border border-white/15 text-white font-semibold';
+      const el = document.createElement('div');
+      el.className = `px-4 py-2.5 rounded-2xl text-xs shadow-2xl text-center ${cls}`;
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    function copyText(txt, msg) {
       const ta = document.createElement('textarea');
-      ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px';
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.left = '-9999px';
       document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); toast(msg || 'Berhasil disalin!', 'ok'); } catch { toast('Gagal salin otomatis.', 'err'); }
+      try { document.execCommand('copy'); toast(msg || 'Disalin!', 'vip'); } catch {}
       document.body.removeChild(ta);
     }
 
-    function extractDriveId(v) {
-      const s = String(v||'').trim();
+    /* ----- LIVE NOTIFICATIONS ON SCREEN + OS PUSH ----- */
+    async function enableSystemNotifications() {
+      if (!('Notification' in window)) {
+        toast('Browser ini menggunakan Notifikasi Layar Dalam Aplikasi (sudah aktif otomatis).', 'info');
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      document.getElementById('notifPermLabel').textContent = perm === 'granted' ? 'Notifikasi HP Aktif ✔' : 'Aktifkan Notifikasi HP';
+      if (perm === 'granted') {
+        toast('Notifikasi layar HP aktif! Anda akan langsung mendapat kabar saat video baru diupload.', 'vip');
+        triggerDeviceNotif('Animedubar Notifikasi Aktif', 'Anda akan menerima update otomatis saat anime/episode terbaru rilis!');
+      } else {
+        toast('Notifikasi dalam aplikasi tetap aktif di layar atas.', 'info');
+      }
+    }
+
+    function triggerDeviceNotif(title, body, cat = 'UPDATE') {
+      // 1. Always show floating Netflix-style banner on customer screen
+      document.getElementById('liveNotifCat').textContent = cat;
+      document.getElementById('liveNotifTitle').textContent = title;
+      document.getElementById('liveNotifBody').textContent = body;
+      const ban = document.getElementById('liveNotifBanner');
+      ban.classList.remove('hidden');
+      clearTimeout(window.__nfNotifTimer);
+      window.__nfNotifTimer = setTimeout(hideLiveNotifBanner, 6500);
+
+      // 2. Also fire OS System Notification if permission granted
+      if ('Notification' in window && Notification.permission === 'granted') {
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification(title, { body, icon: app.config.faviconUrl || './icons/icon-192.png', badge: './icons/icon-192.png' }).catch(() => {});
+          }).catch(() => {});
+        } else {
+          try { new Notification(title, { body, icon: app.config.faviconUrl || './icons/icon-192.png' }); } catch {}
+        }
+      }
+    }
+
+    function hideLiveNotifBanner() { document.getElementById('liveNotifBanner').classList.add('hidden'); }
+
+    function updateNotifBadge() {
+      const unread = (app.notifs || []).filter(n => !n.read).length;
+      const dot = document.getElementById('topNotifDot');
+      if (dot) {
+        dot.textContent = unread > 9 ? '9+' : String(unread);
+        dot.classList.toggle('hidden', unread === 0);
+      }
+    }
+
+    function openNotificationsSheet() {
+      const list = document.getElementById('notifSheetList');
+      list.innerHTML = (app.notifs || []).length ? app.notifs.map(n => `
+        <div class="p-3.5 rounded-2xl ${n.read ? 'bg-black/40 opacity-75' : 'bg-white/10 border border-amber-500/35'} space-y-1">
+          <div class="flex items-center justify-between text-[10px]">
+            <span class="font-black text-amber-400 uppercase">${esc(n.category || 'INFO')}</span>
+            <span class="text-zinc-400">${new Date(n.createdAt || Date.now()).toLocaleDateString('id-ID')}</span>
+          </div>
+          <p class="text-xs font-extrabold text-white">${esc(n.title)}</p>
+          <p class="text-[11px] text-zinc-300">${esc(n.body)}</p>
+        </div>`).join('') : '<p class="text-xs text-zinc-500 text-center py-6">Belum ada notifikasi.</p>';
+      document.getElementById('notifSheet').classList.remove('hidden');
+    }
+
+    function markNotifsRead() {
+      app.notifs.forEach(n => n.read = true);
+      lsSet('adbr_mob_notifs_v6', app.notifs);
+      updateNotifBadge();
+      openNotificationsSheet();
+    }
+
+    /* =========================================================================
+       RENDER UI (100% LATEST NETFLIX MOBILE LOOK & FEEL)
+       ========================================================================= */
+    function artHtml(item, isBackdrop = false) {
+      const t = item.theme || { c1:'#1d4ed8', c2:'#090d1a', accent:'#ef4444' };
+      const imgSrc = isBackdrop ? (item.backdropUrl || item.posterUrl) : item.posterUrl;
+      const img = imgSrc ? `<img src="${esc(imgSrc)}" alt="${esc(item.title)}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" loading="lazy"/>` : '';
+      return `<div class="relative w-full h-full" style="background:linear-gradient(155deg,${t.c1} 0%,${t.c2} 100%);"><div class="absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-25" style="background:${t.accent}"></div>${img}</div>`;
+    }
+
+    function extractDriveId(str) {
+      const s = String(str || '').trim();
+      if (!s || /^DEMO_/i.test(s)) return s;
       const m = s.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/) || s.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
       return m ? m[1] : s;
     }
 
-    async function gasCall(path, body={}) {
-      if (!st.gasUrl) throw new Error('URL Google Apps Script belum diisi.');
-      const res = await fetch(st.gasUrl, {
+    function selectProfile(name, subMode, color, badge) {
+      app.profile = { name, subMode, color, badge };
+      app.player.subMode = subMode;
+      lsSet('adbr_mob_prof_v6', app.profile);
+      document.getElementById('profileGate').classList.add('hidden');
+      renderAll();
+    }
+
+    function switchAppTab(tab) {
+      app.tab = tab;
+      document.querySelectorAll('.app-screen').forEach(s => s.classList.add('hidden'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      document.getElementById('homeFilterPills').classList.toggle('hidden', tab !== 'home');
+      document.querySelectorAll('.btab').forEach(b => {
+        const active = b.getAttribute('data-btab') === tab;
+        b.className = active ? 'btab flex flex-col items-center gap-0.5 text-white' : 'btab flex flex-col items-center gap-0.5 text-zinc-500';
+      });
+      if (tab === 'new') renderNewAndHot();
+      if (tab === 'search') renderAppSearch(document.getElementById('appSearchInput').value);
+      if (tab === 'profile') renderProfileScreen();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setHomePill(key) {
+      app.homePill = key;
+      if (key === 'all') app.activeGenre = 'all';
+      document.querySelectorAll('.hpill').forEach(p => {
+        const active = p.getAttribute('data-pill') === key;
+        p.className = active
+          ? 'hpill px-3.5 py-1.5 rounded-full bg-white text-black font-bold whitespace-nowrap'
+          : 'hpill px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-zinc-100 whitespace-nowrap';
+      });
+      renderHome();
+    }
+
+    function openGenrePicker() {
+      const genres = ['all', ...Array.from(new Set((app.config.catalog || []).flatMap(i => i.genres || []))).sort()];
+      document.getElementById('genreListBox').innerHTML = genres.map(g => `
+        <button type="button" onclick="app.activeGenre='${esc(g)}'; document.getElementById('activeGenrePillLabel').textContent='${g==='all'?t('pillCat'):esc(g)}'; closeOverlay('genreModal'); renderHome();" class="block w-full py-2.5 text-base font-bold ${app.activeGenre===g?'text-white scale-110':'text-zinc-400'}">${g==='all'?'Semua Kategori':esc(g)}</button>
+      `).join('');
+      document.getElementById('genreModal').classList.remove('hidden');
+    }
+
+    function renderHome() {
+      const cat = app.config.catalog || [];
+      let list = cat;
+      if (app.homePill === 'anime') list = list.filter(i => i.type === 'anime');
+      if (app.homePill === 'movie') list = list.filter(i => i.type === 'movie');
+      if (app.homePill === 'vip') list = list.filter(i => i.isVip);
+      if (app.activeGenre !== 'all') list = list.filter(i => (i.genres || []).includes(app.activeGenre));
+
+      const hero = list.find(i => i.featured) || list[0] || cat[0];
+      if (hero) {
+        const inList = app.myList.includes(hero.id);
+        document.getElementById('mobileHeroCard').innerHTML = `
+          ${artHtml(hero, false)}
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/10"></div>
+          <div class="absolute top-3 left-3 right-3 flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded bg-[var(--brand-accent)] text-white text-[9px] font-black tracking-widest uppercase">${hero.type==='movie'?'A FILM':'A SERIAL'} · DUB ARAB</span>
+            <span class="px-2 py-0.5 rounded ${hero.isVip?'vip-gradient text-black':'bg-emerald-500 text-black'} text-[9px] font-black">${hero.isVip?'★ VIP':'GRATIS'}</span>
+          </div>
+          <div class="absolute bottom-0 left-0 right-0 p-4 text-center space-y-2.5">
+            <p dir="rtl" class="font-arabic text-base font-bold text-amber-300 drop-shadow">${esc(hero.arabicTitle)}</p>
+            <h2 class="font-display font-black text-2xl sm:text-3xl text-white leading-tight drop-shadow">${esc(hero.title)}</h2>
+            <p class="text-[11px] text-zinc-200 font-medium">${esc((hero.genres || []).join(' • '))} • Dual Sub ID &amp; AR</p>
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+              <button type="button" onclick="openPlayer('${esc(hero.id)}',0,0)" class="py-2.5 rounded-lg bg-white active:scale-95 text-black font-extrabold text-sm flex items-center justify-center gap-1.5 shadow-xl">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>${t('play')}</span>
+              </button>
+              <button type="button" onclick="toggleMyList('${esc(hero.id)}')" class="py-2.5 rounded-lg bg-zinc-800/85 active:scale-95 backdrop-blur-md border border-white/15 text-white font-bold text-sm">
+                ${inList ? '✔ ' + t('myList') : '+ ' + t('myList')}
+              </button>
+            </div>
+          </div>`;
+      }
+
+      const rows = [];
+      const cwItems = app.continueList.map(c => ({ c, item: cat.find(i => i.id === c.itemId) })).filter(x => x.item);
+      if (cwItems.length && app.homePill === 'all') {
+        rows.push(`
+          <div class="space-y-2">
+            <h3 class="text-sm font-extrabold text-white">${t('continueFor')} ${esc(app.profile.name)}</h3>
+            <div class="flex gap-2.5 overflow-x-auto no-scrollbar">
+              ${cwItems.map(({c, item}) => `
+                <div onclick="openPlayer('${esc(item.id)}',${c.sIdx||0},${c.eIdx||0})" class="shrink-0 w-32 rounded-lg bg-[#18181c] overflow-hidden active:scale-95 transition">
+                  <div class="relative aspect-[2/3]">
+                    ${artHtml(item)}
+                    <div class="absolute inset-0 bg-black/30 flex items-center justify-center"><div class="w-10 h-10 rounded-full bg-black/75 border-2 border-white flex items-center justify-center text-white"><svg class="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/30"><div class="h-full bg-[var(--brand-accent)]" style="width:${c.pct||35}%"></div></div>
+                  </div>
+                  <div class="px-2 py-2 flex items-center justify-between text-zinc-300 text-xs">
+                    <button type="button" onclick="event.stopPropagation(); openDetail('${esc(item.id)}')">ⓘ</button>
+                    <span class="text-[10px] truncate px-1 font-semibold">${esc(item.title)}</span>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`);
+      }
+
+      const top10 = list.filter(i => i.topRank).sort((a,b) => a.topRank - b.topRank);
+      if (top10.length) {
+        rows.push(`
+          <div class="space-y-2">
+            <h3 class="text-sm font-extrabold text-white">${t('top10Title')}</h3>
+            <div class="flex gap-2 overflow-x-auto no-scrollbar py-1">
+              ${top10.map((it, idx) => `
+                <div onclick="openDetail('${esc(it.id)}')" class="shrink-0 flex items-end w-36 active:scale-95 transition">
+                  <span class="rank-stroke -mr-3.5 z-0">${idx+1}</span>
+                  <div class="relative z-10 w-24 aspect-[2/3] rounded-lg overflow-hidden border border-white/10 shadow-xl shrink-0">
+                    ${artHtml(it)}
+                    <span class="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-black ${it.isVip?'vip-gradient text-black':'bg-emerald-500 text-black'}">${it.isVip?'VIP':'FREE'}</span>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`);
+      }
+
+      const cardRow = (title, arr) => !arr.length ? '' : `
+        <div class="space-y-2">
+          <h3 class="text-sm font-extrabold text-white">${title}</h3>
+          <div class="flex gap-2 overflow-x-auto no-scrollbar">
+            ${arr.map(it => `
+              <div onclick="openDetail('${esc(it.id)}')" class="shrink-0 w-28 rounded-lg bg-[#141418] overflow-hidden active:scale-95 transition">
+                <div class="relative aspect-[2/3]">
+                  ${artHtml(it)}
+                  <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black ${it.isVip?'vip-gradient text-black':'bg-emerald-500 text-black'}">${it.isVip?'★ VIP':'GRATIS'}</span>
+                </div>
+                <div class="p-1.5"><p class="text-[11px] font-bold text-white truncate">${esc(it.title)}</p><p dir="rtl" class="font-arabic text-[9px] text-amber-300 truncate">${esc(it.arabicTitle)}</p></div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+
+      rows.push(cardRow(t('animeRow'), list.filter(i => i.type === 'anime')));
+      rows.push(cardRow(t('movieRow'), list.filter(i => i.type === 'movie')));
+      rows.push(cardRow(t('vipRow'), list.filter(i => i.isVip)));
+      document.getElementById('mobileRowsContainer').innerHTML = rows.join('');
+    }
+
+    function setNewSubTab(tab) {
+      app.newTab = tab;
+      document.querySelectorAll('.ntab').forEach(b => {
+        const active = b.getAttribute('data-ntab') === tab;
+        b.className = active ? 'ntab px-3.5 py-2 rounded-full bg-white text-black whitespace-nowrap' : 'ntab px-3.5 py-2 rounded-full bg-white/10 text-zinc-200 whitespace-nowrap';
+      });
+      renderNewAndHot();
+    }
+
+    function renderNewAndHot() {
+      const cat = app.config.catalog || [];
+      const arr = app.newTab === 'top10' ? [...cat].sort((a,b) => (a.topRank||99)-(b.topRank||99)) : cat;
+      document.getElementById('newAndHotFeed').innerHTML = arr.map(it => `
+        <div class="rounded-2xl bg-[#141418] border border-white/10 overflow-hidden">
+          <div onclick="openDetail('${esc(it.id)}')" class="relative aspect-video">${artHtml(it, true)}<div class="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent"></div><span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-black ${it.isVip?'vip-gradient text-black':'bg-emerald-500 text-black'}">${it.isVip?'★ VIP':'GRATIS'}</span><div class="absolute bottom-2.5 left-3 right-3"><p dir="rtl" class="font-arabic text-xs text-amber-300 font-bold">${esc(it.arabicTitle)}</p><h4 class="text-base font-black text-white">${esc(it.title)}</h4></div></div>
+          <div class="p-3.5 space-y-2.5 text-xs">
+            <p class="text-zinc-300 leading-relaxed">${esc(it.synopsis)}</p>
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[11px] text-zinc-400">${esc((it.genres||[]).join(' · '))}</span>
+              <button type="button" onclick="openPlayer('${esc(it.id)}',0,0)" class="px-4 py-1.5 rounded-lg bg-white text-black font-extrabold">▶ ${t('play')}</button>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderAppSearch(q) {
+      const term = String(q || '').trim().toLowerCase();
+      document.getElementById('searchListHeading').textContent = term ? `Hasil untuk "${q}"` : 'Acara & Film Rekomendasi';
+      const list = (app.config.catalog || []).filter(i => !term || i.title.toLowerCase().includes(term) || (i.arabicTitle||'').toLowerCase().includes(term) || (i.genres||[]).join(' ').toLowerCase().includes(term));
+      document.getElementById('appSearchResults').innerHTML = list.length ? list.map(it => `
+        <div onclick="openDetail('${esc(it.id)}')" class="flex items-center gap-3 p-2 rounded-xl bg-[#141418] active:scale-[0.98] transition">
+          <div class="w-28 aspect-video rounded-lg overflow-hidden shrink-0">${artHtml(it, true)}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-white truncate">${esc(it.title)}</p>
+            <p dir="rtl" class="font-arabic text-[10px] text-amber-300 truncate text-left">${esc(it.arabicTitle)}</p>
+          </div>
+          <button type="button" onclick="event.stopPropagation(); openPlayer('${esc(it.id)}',0,0)" class="w-9 h-9 rounded-full border border-white/50 flex items-center justify-center text-white shrink-0">▶</button>
+        </div>`).join('') : '<p class="text-center text-xs text-zinc-500 py-8">Tidak ditemukan.</p>';
+    }
+
+    function renderProfileScreen() {
+      const av = document.getElementById('myAvatarBox');
+      av.style.background = app.profile.color || '#E50914';
+      av.textContent = app.profile.badge || 'A';
+      document.getElementById('myProfileName').textContent = (app.member && app.member.displayName) || app.profile.name;
+      document.getElementById('myProfileTierBadge').innerHTML = hasVip()
+        ? `<span class="text-emerald-300">★ MEMBER VIP AKTIF · Kuota In-App: ${getUserOfflineQuota()} Eps</span>`
+        : 'Mode Gratis · Upgrade VIP via QRIS / Transfer Bank';
+      document.getElementById('profileAuthBtnLabel').textContent = app.member ? 'Logout (' + app.member.email.split('@')[0] + ')' : 'Masuk / Daftar Akun';
+      document.getElementById('appGasUrlInput').value = app.config.backendWebAppUrl || '';
+      document.getElementById('appSyncBadge').textContent = app.config.backendWebAppUrl ? 'Online' : 'Lokal';
+      if ('Notification' in window && Notification.permission === 'granted') {
+        document.getElementById('notifPermLabel').textContent = 'Notifikasi HP Aktif ✔';
+      }
+
+      const myItems = (app.config.catalog || []).filter(i => app.myList.includes(i.id));
+      document.getElementById('myProfileListRow').innerHTML = myItems.length ? myItems.map(it => `
+        <div onclick="openDetail('${esc(it.id)}')" class="shrink-0 w-24 rounded-lg overflow-hidden border border-white/10">
+          <div class="aspect-[2/3]">${artHtml(it)}</div>
+        </div>`).join('') : '<p class="text-xs text-zinc-500">Daftar Saya masih kosong.</p>';
+      renderOfflineVaultUI();
+    }
+
+    /* =========================================================================
+       DETAIL SHEET (WITH IN-APP ISOLATED VAULT SAVE BUTTON PER EPISODE)
+       ========================================================================= */
+    function openDetail(id) {
+      const it = (app.config.catalog || []).find(c => c.id === id);
+      if (!it) return;
+      const inList = app.myList.includes(it.id);
+      const eps = (it.seasons && it.seasons[0] && it.seasons[0].episodes) || [];
+      document.getElementById('detailSheetBody').innerHTML = `
+        <div class="relative aspect-video">
+          ${artHtml(it, true)}
+          <div class="absolute inset-0 bg-gradient-to-t from-[#141416] via-black/30 to-transparent"></div>
+          <button type="button" onclick="closeOverlay('detailSheet')" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/75 text-white font-bold">✕</button>
+          <div class="absolute bottom-3 left-4 right-4">
+            <p dir="rtl" class="font-arabic text-sm font-bold text-amber-300">${esc(it.arabicTitle)}</p>
+            <h2 class="text-xl font-black text-white">${esc(it.title)}</h2>
+          </div>
+        </div>
+        <div class="p-4 space-y-3.5">
+          <div class="flex items-center gap-2 text-xs text-zinc-300">
+            <span class="text-emerald-400 font-bold">★ ${esc(it.rating)}</span><span>·</span><span>${it.year}</span><span>·</span>
+            <span class="px-1.5 py-0.5 rounded bg-white/15 text-[10px] font-bold">${esc(it.quality||'HD')}</span>
+            <span class="px-2 py-0.5 rounded ${it.isVip?'vip-gradient text-black':'bg-emerald-500 text-black'} text-[10px] font-black">${it.isVip?'★ VIP':'GRATIS'}</span>
+          </div>
+          <button type="button" onclick="closeOverlay('detailSheet'); openPlayer('${esc(it.id)}',0,0)" class="w-full py-3 rounded-lg bg-white text-black font-extrabold text-sm">▶ ${t('play')}</button>
+          <button type="button" onclick="saveEpisodeToInAppVault('${esc(it.id)}',0,0)" class="w-full py-2.5 rounded-lg bg-[#26262a] text-white font-bold text-xs flex items-center justify-center gap-2">
+            <span>⬇</span><span>Simpan di Aplikasi (Khusus Tonton In-App)</span>
+          </button>
+          <p class="text-xs text-zinc-300 leading-relaxed">${esc(it.synopsis)}</p>
+          <div class="flex gap-4 text-xs font-bold text-zinc-300 border-y border-white/10 py-3 justify-around">
+            <button type="button" onclick="toggleMyList('${esc(it.id)}'); openDetail('${esc(it.id)}')">${inList ? '✔ ' + t('myList') : '+ ' + t('myList')}</button>
+            <button type="button" onclick="openWhatsAppAdmin('Tonton ${esc(it.title)} (Dub Arab + Dual Sub) di Animedubar!')">↗ Bagikan</button>
+          </div>
+          <div class="space-y-2">
+            <h4 class="text-xs font-extrabold uppercase text-zinc-400">Episode (${eps.length})</h4>
+            ${eps.map((ep, idx) => {
+              const locked = (it.isVip || ep.isVip) && !hasVip();
+              return `<div class="p-3 rounded-xl bg-[#1c1c20] flex items-center justify-between gap-2">
+                <div onclick="closeOverlay('detailSheet'); openPlayer('${esc(it.id)}',0,${idx})" class="min-w-0 flex-1 cursor-pointer">
+                  <p class="text-xs font-bold text-white truncate">${locked ? '🔒 ' : ''}Eps ${ep.ep}: ${esc(ep.title)}</p>
+                  <p class="text-[10px] text-zinc-400">${esc(ep.duration)} · Dual Sub ID &amp; AR</p>
+                </div>
+                <button type="button" onclick="saveEpisodeToInAppVault('${esc(it.id)}',0,${idx})" class="w-9 h-9 rounded-full bg-white/10 hover:bg-blue-600/40 text-white flex items-center justify-center text-sm shrink-0" title="Simpan In-App Vault">⬇</button>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      document.getElementById('detailSheet').classList.remove('hidden');
+    }
+
+    /* =========================================================================
+       100% NETFLIX FULLSCREEN PLAYER ENGINE
+       ========================================================================= */
+    const CROP_MODES = [
+      { cls:'crop-fit', label:'Asli (Fit)' },
+      { cls:'crop-zoom', label:'Pangkas (Zoom)' },
+      { cls:'crop-fill', label:'Penuh (Stretch)' }
+    ];
+
+    function openPlayer(itemId, sIdx=0, eIdx=0) {
+      const it = (app.config.catalog || []).find(c => c.id === itemId);
+      if (!it) return;
+      const eps = (it.seasons && it.seasons[sIdx] && it.seasons[sIdx].episodes) || [];
+      const ep = eps[eIdx] || eps[0];
+      if (!ep) return;
+      if ((it.isVip || ep.isVip) && !hasVip()) {
+        openVipCheckoutSheet('plans', `"${it.title} — Eps ${ep.ep}" khusus Member VIP.`);
+        return;
+      }
+
+      app.player.itemId = itemId;
+      app.player.sIdx = sIdx;
+      app.player.eIdx = eIdx;
+      app.player.locked = false;
+      app.player.playing = true;
+      app.player.demoSec = 10;
+
+      app.continueList = [{ itemId, sIdx, eIdx, pct:30 }, ...app.continueList.filter(x => x.itemId !== itemId)].slice(0, 8);
+      lsSet('adbr_mob_cw_v6', app.continueList);
+
+      document.getElementById('playerSheet').classList.remove('hidden');
+      togglePlayerLock(false);
+      initPlayerMedia();
+      showPlayerHud();
+    }
+
+    function initPlayerMedia() {
+      const p = app.player;
+      const it = (app.config.catalog || []).find(c => c.id === p.itemId);
+      const ep = it.seasons[p.sIdx].episodes[p.eIdx];
+      document.getElementById('plTitle').textContent = it.title;
+      document.getElementById('plSub').textContent = `S${p.sIdx+1}:E${ep.ep} · ${ep.title}`;
+
+      clearInterval(p.demoTimer);
+      if (p.hls) { p.hls.destroy(); p.hls = null; }
+      const v = document.getElementById('plVideo');
+      const ifr = document.getElementById('plIframe');
+      const demo = document.getElementById('plDemoBackdrop');
+      v.pause(); v.classList.add('hidden');
+      ifr.src = ''; ifr.classList.add('hidden');
+      demo.classList.add('hidden');
+
+      const fileId = extractDriveId(ep[p.server] || ep.driveSubId);
+      const isDemo = !fileId || /^DEMO_/i.test(fileId);
+
+      if ((p.sourceMode === 'hls' || (ep.hlsUrl && p.sourceMode === 'auto')) && ep.hlsUrl) {
+        v.classList.remove('hidden');
+        if (window.Hls && window.Hls.isSupported() && ep.hlsUrl.includes('.m3u8')) {
+          p.hls = new window.Hls();
+          p.hls.loadSource(ep.hlsUrl);
+          p.hls.attachMedia(v);
+          p.hls.on(window.Hls.Events.MANIFEST_PARSED, () => v.play().catch(()=>{}));
+        } else {
+          v.src = ep.hlsUrl;
+          v.play().catch(()=>{});
+        }
+        v.playbackRate = p.speed;
+        v.ontimeupdate = () => {
+          const dur = v.duration || 1440;
+          const cur = v.currentTime || 0;
+          document.getElementById('nfSeekBar').value = (cur / dur) * 100;
+          updateTimeRemain(dur - cur);
+          document.getElementById('nfSkipIntroBtn').classList.toggle('hidden', !(cur >= 5 && cur <= 90));
+          renderPlayerSubtitles(cur);
+        };
+        v.onended = () => playNextEp();
+      } else if (!isDemo && p.sourceMode !== 'demo') {
+        ifr.classList.remove('hidden');
+        ifr.src = `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+      } else {
+        demo.classList.remove('hidden');
+        document.getElementById('plDemoArt').innerHTML = artHtml(it, true);
+        p.playing = true;
+        document.getElementById('nfBigPlayBtn').textContent = '❚❚';
+        renderPlayerSubtitles(p.demoSec);
+        p.demoTimer = setInterval(() => {
+          if (!p.playing) return;
+          p.demoSec = (p.demoSec + p.speed) % p.demoDur;
+          document.getElementById('nfSeekBar').value = (p.demoSec / p.demoDur) * 100;
+          updateTimeRemain(p.demoDur - p.demoSec);
+          document.getElementById('nfSkipIntroBtn').classList.toggle('hidden', !(p.demoSec >= 5 && p.demoSec <= 90));
+          renderPlayerSubtitles(p.demoSec);
+        }, 1000);
+      }
+      applyCropClass();
+    }
+
+    function updateTimeRemain(remSec) {
+      const s = Math.max(0, Math.floor(remSec));
+      const m = String(Math.floor(s / 60)).padStart(2, '0');
+      const sc = String(s % 60).padStart(2, '0');
+      document.getElementById('nfTimeRemain').textContent = `-${m}:${sc}`;
+    }
+
+    function handlePlayerTap(e) {
+      if (app.player.locked) { showUnlockPrompt(); return; }
+      const now = Date.now();
+      if (now - app.player.lastTapTime < 280) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        if (x < rect.width * 0.35) { skipSeconds(-10); flashHudToast('↺ -10 detik'); return; }
+        if (x > rect.width * 0.65) { skipSeconds(10); flashHudToast('+10 detik ↻'); return; }
+      }
+      app.player.lastTapTime = now;
+      if (app.player.hudVisible) hidePlayerHud();
+      else showPlayerHud();
+    }
+
+    function showPlayerHud() {
+      app.player.hudVisible = true;
+      const hud = document.getElementById('nfHudControls');
+      hud.style.opacity = '1'; hud.style.pointerEvents = 'auto';
+      clearTimeout(app.player.hudTimer);
+      app.player.hudTimer = setTimeout(() => {
+        if (app.player.playing && document.getElementById('nfSubPanelBackdrop').classList.contains('hidden')) hidePlayerHud();
+      }, 4200);
+    }
+
+    function hidePlayerHud() {
+      app.player.hudVisible = false;
+      const hud = document.getElementById('nfHudControls');
+      hud.style.opacity = '0'; hud.style.pointerEvents = 'none';
+    }
+
+    function flashHudToast(txt) {
+      const el = document.getElementById('nfHudToast');
+      el.textContent = txt;
+      el.classList.remove('hidden');
+      clearTimeout(window.__hudT);
+      window.__hudT = setTimeout(() => el.classList.add('hidden'), 1400);
+    }
+
+    function togglePlayPause() {
+      const v = document.getElementById('plVideo');
+      if (!v.classList.contains('hidden')) {
+        if (v.paused) { v.play().catch(()=>{}); app.player.playing = true; }
+        else { v.pause(); app.player.playing = false; }
+      } else {
+        app.player.playing = !app.player.playing;
+      }
+      document.getElementById('nfBigPlayBtn').textContent = app.player.playing ? '❚❚' : '▶';
+      showPlayerHud();
+    }
+
+    function skipSeconds(delta) {
+      const v = document.getElementById('plVideo');
+      if (!v.classList.contains('hidden') && v.duration) {
+        v.currentTime = Math.min(v.duration, Math.max(0, v.currentTime + delta));
+      } else {
+        app.player.demoSec = Math.min(app.player.demoDur, Math.max(0, app.player.demoSec + delta));
+        document.getElementById('nfSeekBar').value = (app.player.demoSec / app.player.demoDur) * 100;
+        renderPlayerSubtitles(app.player.demoSec);
+      }
+      showPlayerHud();
+    }
+
+    function seekToPercent(pct) {
+      const v = document.getElementById('plVideo');
+      if (!v.classList.contains('hidden') && v.duration) {
+        v.currentTime = (Number(pct) / 100) * v.duration;
+      } else {
+        app.player.demoSec = (Number(pct) / 100) * app.player.demoDur;
+        updateTimeRemain(app.player.demoDur - app.player.demoSec);
+        renderPlayerSubtitles(app.player.demoSec);
+      }
+    }
+
+    function skipIntroNow() {
+      const v = document.getElementById('plVideo');
+      if (!v.classList.contains('hidden')) v.currentTime = 92;
+      else app.player.demoSec = 92;
+      document.getElementById('nfSkipIntroBtn').classList.add('hidden');
+      flashHudToast('Intro dilewati');
+    }
+
+    function setPlayerBrightness(val) {
+      const b = Number(val) || 100;
+      app.player.brightness = b;
+      document.getElementById('nfBrightVal').textContent = b + '%';
+      document.getElementById('nfMediaLayer').style.filter = `brightness(${b / 100})`;
+      document.getElementById('nfBrightOverlay').style.opacity = b < 100 ? String((100 - b) / 130) : '0';
+      showPlayerHud();
+    }
+
+    function cycleCropMode() {
+      app.player.cropIdx = (app.player.cropIdx + 1) % CROP_MODES.length;
+      applyCropClass();
+      flashHudToast('Pangkas: ' + CROP_MODES[app.player.cropIdx].label);
+      showPlayerHud();
+    }
+
+    function applyCropClass() {
+      const mode = CROP_MODES[app.player.cropIdx];
+      const v = document.getElementById('plVideo');
+      v.classList.remove('crop-fit', 'crop-zoom', 'crop-fill');
+      v.classList.add(mode.cls);
+      document.getElementById('nfCropLabel').textContent = mode.label.split(' ')[0];
+    }
+
+    function togglePlayerLock(lock) {
+      app.player.locked = lock;
+      document.getElementById('nfLockOverlay').classList.toggle('hidden', !lock);
+      document.getElementById('nfUnlockConfirmBtn').classList.add('hidden');
+      if (lock) hidePlayerHud();
+      else showPlayerHud();
+    }
+
+    function showUnlockPrompt() {
+      const btn = document.getElementById('nfUnlockConfirmBtn');
+      btn.classList.remove('hidden');
+      clearTimeout(window.__unlT);
+      window.__unlT = setTimeout(() => btn.classList.add('hidden'), 3000);
+    }
+
+    function togglePlayerSourceMode() {
+      app.player.sourceMode = app.player.sourceMode === 'hls' ? 'demo' : 'hls';
+      initPlayerMedia();
+      flashHudToast('Mode Pemutar: ' + app.player.sourceMode.toUpperCase());
+    }
+
+    function toggleFullscreenAndRotate() {
+      const el = document.getElementById('playerSheet');
+      if (!document.fullscreenElement) {
+        if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+        if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
+      } else {
+        document.exitFullscreen().catch(()=>{});
+        if (screen.orientation && screen.orientation.unlock) try { screen.orientation.unlock(); } catch {}
+      }
+    }
+
+    function renderPlayerSubtitles(sec) {
+      const p = app.player;
+      const tCur = (sec !== undefined ? sec : p.demoSec) + (Number(p.subOffsetMs || 0) / 1000);
+      const wrap = document.getElementById('nfSubOverlay');
+      const topEl = document.getElementById('nfSubTop');
+      const botEl = document.getElementById('nfSubBot');
+      wrap.style.bottom = p.subPos + 'px';
+
+      if (p.subMode === 'off') { topEl.style.display = 'none'; botEl.style.display = 'none'; return; }
+
+      const pick = (arr, isAr) => {
+        if (arr && arr.length) {
+          const hit = arr.find(c => tCur >= c.start && tCur <= c.end);
+          return hit ? hit.text : '';
+        }
+        const loopT = tCur % 32;
+        const dHit = DEMO_SUBS.find(c => loopT >= c.start && loopT <= c.end) || DEMO_SUBS[0];
+        return isAr ? dHit.ar : dHit.id;
+      };
+
+      const arTxt = pick(p.customSubs.ar, true);
+      const idTxt = pick(p.customSubs.id, false);
+      const showAr = (p.subMode === 'dual' || p.subMode === 'ar') && Boolean(arTxt);
+      const showId = (p.subMode === 'dual' || p.subMode === 'id') && Boolean(idTxt);
+
+      topEl.style.display = showAr ? 'inline-block' : 'none';
+      if (showAr) { topEl.textContent = arTxt; topEl.style.fontSize = Math.round(p.subSize * 1.15) + 'px'; topEl.style.color = '#fcd34d'; topEl.style.background = 'rgba(0,0,0,0.78)'; }
+      botEl.style.display = showId ? 'inline-block' : 'none';
+      if (showId) { botEl.textContent = idTxt; botEl.style.fontSize = p.subSize + 'px'; botEl.style.color = '#ffffff'; botEl.style.background = 'rgba(0,0,0,0.78)'; }
+    }
+
+    function openPlayerSubPanel(panelType) {
+      clearTimeout(app.player.hudTimer);
+      const card = document.getElementById('nfSubPanelCard');
+      const p = app.player;
+
+      if (panelType === 'speed') {
+        const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+        card.innerHTML = `
+          <div class="flex justify-between items-center"><h4 class="font-black text-white text-sm">Kecepatan Pemutaran</h4><button type="button" onclick="closePlayerSubPanel()" class="text-zinc-400 font-bold">✕</button></div>
+          <div class="grid grid-cols-3 gap-2 text-xs font-bold">
+            ${speeds.map(sp => `<button type="button" onclick="setPlayerSpeed(${sp})" class="py-3 rounded-xl border ${p.speed===sp?'bg-white text-black border-white':'bg-black border-white/15 text-zinc-200'}">${sp}x${sp===1?' (Normal)':''}</button>`).join('')}
+          </div>`;
+      } else if (panelType === 'episodes') {
+        const it = (app.config.catalog || []).find(c => c.id === p.itemId);
+        const eps = (it && it.seasons[p.sIdx] && it.seasons[p.sIdx].episodes) || [];
+        card.innerHTML = `
+          <div class="flex justify-between items-center"><h4 class="font-black text-white text-sm">Episode · ${esc(it.title)}</h4><button type="button" onclick="closePlayerSubPanel()" class="text-zinc-400 font-bold">✕</button></div>
+          <div class="space-y-2">
+            ${eps.map((e, i) => `
+              <button type="button" onclick="closePlayerSubPanel(); openPlayer('${esc(it.id)}',${p.sIdx},${i})" class="w-full text-left p-3 rounded-xl border flex items-center justify-between ${i===p.eIdx?'bg-[var(--brand-accent)]/20 border-[var(--brand-accent)] text-white':'bg-black border-white/10 text-zinc-300'} text-xs">
+                <div class="min-w-0"><p class="font-bold truncate">${(it.isVip||e.isVip)&&!hasVip()?'🔒 ':''}${e.ep}. ${esc(e.title)}</p><p class="text-[10px] text-zinc-400">${esc(e.duration)}</p></div>
+                ${i===p.eIdx?'<span class="text-[10px] font-black text-[var(--brand-accent)]">DIPUTAR</span>':''}
+              </button>`).join('')}
+          </div>`;
+      } else if (panelType === 'audioSub') {
+        card.innerHTML = `
+          <div class="flex justify-between items-center"><h4 class="font-black text-white text-sm">Audio &amp; Subtitle</h4><button type="button" onclick="closePlayerSubPanel()" class="text-zinc-400 font-bold">✕</button></div>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="space-y-2">
+              <p class="text-[10px] font-black uppercase text-zinc-400">Audio</p>
+              <button type="button" onclick="app.player.audioTrack='ar'; flashHudToast('Audio: Dubbing Arab'); openPlayerSubPanel('audioSub')" class="w-full text-left px-3 py-2.5 rounded-xl ${p.audioTrack==='ar'?'bg-white text-black font-extrabold':'bg-black text-zinc-300'}">✔ Arab (Dubbing)</button>
+              <button type="button" onclick="app.player.audioTrack='orig'; flashHudToast('Audio: Original'); openPlayerSubPanel('audioSub')" class="w-full text-left px-3 py-2.5 rounded-xl ${p.audioTrack==='orig'?'bg-white text-black font-extrabold':'bg-black text-zinc-300'}">Original</button>
+              <p class="text-[10px] font-black uppercase text-zinc-400 pt-2">Server GDrive</p>
+              ${[['driveSubId','Sub Indo'],['driveSubAr','Sub Arab'],['driveDual','Dual Sub']].map(([k,l]) => `<button type="button" onclick="app.player.server='${k}'; initPlayerMedia(); openPlayerSubPanel('audioSub')" class="w-full text-left px-3 py-2 rounded-xl ${p.server===k?'bg-[var(--brand-accent)] text-white font-bold':'bg-black text-zinc-300'}">${l}</button>`).join('')}
+            </div>
+            <div class="space-y-2">
+              <p class="text-[10px] font-black uppercase text-zinc-400">Subtitle</p>
+              ${[['dual','Dual Sub (ID + AR)'],['id','Bahasa Indonesia'],['ar','العربية (Arab)'],['off','Nonaktif']].map(([m,l]) => `<button type="button" onclick="app.player.subMode='${m}'; renderPlayerSubtitles(); openPlayerSubPanel('audioSub')" class="w-full text-left px-3 py-2.5 rounded-xl ${p.subMode===m?'bg-white text-black font-extrabold':'bg-black text-zinc-300'}">${p.subMode===m?'✔ ':''}${l}</button>`).join('')}
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-white/10 space-y-2.5 text-xs">
+            <p class="font-extrabold text-amber-400">Upload Subtitle Langsung (.ass / .ssa / .srt / .vtt / .sbv / .sub)</p>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-center font-bold cursor-pointer">
+                📤 Upload Sub Indo ${p.customSubs.id.length ? '('+p.customSubs.id.length+')' : ''}
+                <input type="file" accept=".ass,.ssa,.srt,.vtt,.sbv,.sub,.txt" onchange="handleDirectSubUpload(event,'id')" class="hidden" />
+              </label>
+              <label class="py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 text-center font-bold cursor-pointer">
+                📤 Upload Sub Arab ${p.customSubs.ar.length ? '('+p.customSubs.ar.length+')' : ''}
+                <input type="file" accept=".ass,.ssa,.srt,.vtt,.sbv,.sub,.txt" onchange="handleDirectSubUpload(event,'ar')" class="hidden" />
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div><label class="text-zinc-400 block">Ukuran: ${p.subSize}px</label><input type="range" min="12" max="28" value="${p.subSize}" oninput="app.player.subSize=Number(this.value); renderPlayerSubtitles();" class="w-full accent-amber-400"/></div>
+              <div><label class="text-zinc-400 block">Sync (ms)</label><input type="number" step="100" value="${p.subOffsetMs}" oninput="app.player.subOffsetMs=Number(this.value); renderPlayerSubtitles();" class="w-full bg-black border border-white/15 rounded-lg px-2 py-1 font-mono text-white"/></div>
+            </div>
+          </div>`;
+      }
+      document.getElementById('nfSubPanelBackdrop').classList.remove('hidden');
+    }
+
+    function setPlayerSpeed(sp) {
+      app.player.speed = sp;
+      const v = document.getElementById('plVideo');
+      if (v) v.playbackRate = sp;
+      document.getElementById('nfSpeedLabel').textContent = `Kecepatan (${sp}x)`;
+      closePlayerSubPanel();
+      flashHudToast(`Kecepatan: ${sp}x`);
+    }
+
+    function closePlayerSubPanel() {
+      document.getElementById('nfSubPanelBackdrop').classList.add('hidden');
+      showPlayerHud();
+    }
+
+    function playNextEp() {
+      const it = (app.config.catalog || []).find(c => c.id === app.player.itemId);
+      const eps = it && it.seasons[app.player.sIdx] && it.seasons[app.player.sIdx].episodes;
+      if (eps && app.player.eIdx + 1 < eps.length) openPlayer(it.id, app.player.sIdx, app.player.eIdx + 1);
+      else flashHudToast('Episode terakhir season ini');
+    }
+
+    function closePlayer() {
+      clearInterval(app.player.demoTimer);
+      clearTimeout(app.player.hudTimer);
+      if (app.player.hls) { app.player.hls.destroy(); app.player.hls = null; }
+      const v = document.getElementById('plVideo'); v.pause(); v.removeAttribute('src');
+      document.getElementById('plIframe').src = '';
+      if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+      document.getElementById('playerSheet').classList.add('hidden');
+      renderAll();
+    }
+
+    /* =========================================================================
+       NETFLIX-STYLE VIP CHECKOUT (QRIS / TF -> AUTO-POLLING VIP ACTIVATION)
+       ========================================================================= */
+    function openVipCheckoutSheet(tab='plans', reason='') {
+      clearInterval(app.payPollTimer);
+      const rEl = document.getElementById('vipLockReason');
+      if (reason) { rEl.textContent = '🔒 ' + reason; rEl.classList.remove('hidden'); }
+      else rEl.classList.add('hidden');
+
+      document.getElementById('vipPlansList').innerHTML = (app.config.vipPlans || []).map(pl => `
+        <button type="button" onclick="app.selectedPlanId='${pl.id}'; openVipCheckoutSheet('plans')" class="w-full text-left p-3.5 rounded-2xl border ${app.selectedPlanId===pl.id?'border-[var(--brand-accent)] bg-red-600/15':'border-white/10 bg-black'} flex items-center justify-between">
+          <div><p class="text-xs font-extrabold text-white">${esc(pl.name)} ${pl.popular?'<span class="ml-1 px-1.5 py-0.5 rounded bg-amber-500 text-black text-[9px] font-black">POPULER</span>':''}</p><p class="text-[11px] text-zinc-400">${esc(pl.duration)} · ${esc(pl.note||'')}</p></div>
+          <p class="text-base font-black text-amber-300">${esc(pl.price)}</p>
+        </button>`).join('');
+
+      backToStep1Plans();
+      selectPayMethod(app.payMethod);
+      switchVipTab(tab);
+      document.getElementById('vipSheet').classList.remove('hidden');
+    }
+
+    function switchVipTab(tTab) {
+      document.getElementById('vipPanePlans').classList.toggle('hidden', tTab !== 'plans');
+      document.getElementById('vipPaneVoucher').classList.toggle('hidden', tTab !== 'voucher');
+      document.getElementById('vtabPlans').className = tTab==='plans' ? 'py-2 rounded-xl bg-[var(--brand-accent)] text-white' : 'py-2 rounded-xl bg-white/10 text-zinc-200';
+      document.getElementById('vtabVoucher').className = tTab==='voucher' ? 'py-2 rounded-xl bg-[var(--brand-accent)] text-white' : 'py-2 rounded-xl bg-white/10 text-zinc-200';
+      const vOk = hasVip();
+      document.getElementById('activeVoucherBox').classList.toggle('hidden', !vOk);
+      document.getElementById('voucherForm').classList.toggle('hidden', vOk);
+      if (vOk) {
+        const exp = (app.voucher && app.voucher.expiresAt) || (app.member && Date.parse(app.member.vipExpiresAt)) || (Date.now()+30*86400000);
+        document.getElementById('activeVoucherDetail').textContent = `${(app.voucher && app.voucher.planName) || 'Member VIP'} · Aktif s/d ${new Date(exp).toLocaleDateString('id-ID')}`;
+      }
+    }
+
+    function selectPayMethod(m) {
+      app.payMethod = m;
+      document.getElementById('pmBtnQRIS').className = m==='QRIS' ? 'p-3 rounded-xl border border-emerald-400 bg-emerald-500/15 text-left' : 'p-3 rounded-xl border border-white/15 bg-white/5 text-left';
+      document.getElementById('pmBtnTF').className = m==='BANK_TRANSFER' ? 'p-3 rounded-xl border border-emerald-400 bg-emerald-500/15 text-left' : 'p-3 rounded-xl border border-white/15 bg-white/5 text-left';
+    }
+
+    function backToStep1Plans() {
+      clearInterval(app.payPollTimer);
+      document.getElementById('vipStep1Select').classList.remove('hidden');
+      document.getElementById('vipStep2Pay').classList.add('hidden');
+    }
+
+    async function createAutomatedPaymentInvoice() {
+      const btn = document.getElementById('btnCreateInvoice');
+      const pl = (app.config.vipPlans || []).find(p => p.id === app.selectedPlanId) || app.config.vipPlans[0];
+      const promoCode = (document.getElementById('vipPromoInput').value || '').trim().toUpperCase();
+      const baseRp = Number(String(pl.price).replace(/[^0-9]/g, '')) || 29000;
+
+      btn.disabled = true; btn.textContent = 'Membuat Invoice...';
+      let inv = {
+        invoice_number: 'INV-ADBR-' + Date.now(),
+        plan_id: 'vip-' + pl.id,
+        plan_name: pl.name,
+        duration_days: pl.id === 'yearly' ? 365 : pl.id === 'quarterly' ? 90 : 30,
+        method: app.payMethod,
+        payable_amount_idr: baseRp,
+        qris_image_url: app.config.qrisImageUrl || '',
+        bank_name: app.config.bankName || 'BCA / BSI / BRI',
+        bank_account: app.config.bankAccountNumber || '1234567890',
+        bank_holder: app.config.bankAccountHolder || 'ANIMEDUBAR OFFICIAL',
+        status: 'PENDING'
+      };
+
+      try {
+        if (app.config.backendWebAppUrl) {
+          const resp = await gasPost('/api/payments/checkout', {
+            planCode: 'vip-' + pl.id,
+            method: app.payMethod,
+            promoCode,
+            userEmail: (app.member && app.member.email) || 'guest@animedubar'
+          });
+          if (resp.invoice) inv = Object.assign(inv, resp.invoice);
+        }
+      } catch (err) {
+        toast('Checkout server: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Lanjutkan ke Pembayaran →';
+      }
+
+      app.activeInvoice = inv;
+      document.getElementById('payInvNo').textContent = inv.invoice_number;
+      document.getElementById('payTotalRp').textContent = 'Rp ' + Number(inv.payable_amount_idr || inv.final_amount_idr || baseRp).toLocaleString('id-ID');
+      document.getElementById('payPlanSummary').textContent = `${inv.plan_name} · ${inv.duration_days} Hari`;
+      document.getElementById('payStatusPill').textContent = inv.status;
+
+      const qBox = document.getElementById('payQrisBox');
+      const bBox = document.getElementById('payBankBox');
+      qBox.classList.toggle('hidden', app.payMethod !== 'QRIS');
+      bBox.classList.toggle('hidden', app.payMethod !== 'BANK_TRANSFER');
+
+      if (app.payMethod === 'QRIS') {
+        const qVis = document.getElementById('payQrisVisual');
+        if (inv.qris_image_url) {
+          qVis.innerHTML = `<img src="${esc(inv.qris_image_url)}" alt="QRIS Animedubar" class="w-48 h-48 object-contain"/>`;
+        } else {
+          // Clean scannable-style QR placeholder with invoice metadata
+          qVis.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent('ANIMEDUBAR|' + inv.invoice_number + '|RP' + inv.payable_amount_idr)}" alt="QRIS" class="w-44 h-44"/>`;
+        }
+      } else {
+        document.getElementById('payBankName').textContent = inv.bank_name;
+        document.getElementById('payBankAcc').textContent = inv.bank_account;
+        document.getElementById('payBankHolder').textContent = inv.bank_holder;
+      }
+
+      document.getElementById('vipStep1Select').classList.add('hidden');
+      document.getElementById('vipStep2Pay').classList.remove('hidden');
+      startPaymentAutoPolling();
+    }
+
+    function startPaymentAutoPolling() {
+      clearInterval(app.payPollTimer);
+      if (!app.config.backendWebAppUrl || !app.activeInvoice) return;
+      app.payPollTimer = setInterval(async () => {
+        try {
+          const st = await gasPost('/api/payments/status/' + encodeURIComponent(app.activeInvoice.invoice_number), {});
+          document.getElementById('payStatusPill').textContent = st.status || 'PENDING';
+          if (st.status === 'PAID') {
+            clearInterval(app.payPollTimer);
+            const days = app.activeInvoice.duration_days || 30;
+            app.voucher = {
+              code: app.activeInvoice.invoice_number,
+              planId: app.activeInvoice.plan_id,
+              planName: app.activeInvoice.plan_name,
+              expiresAt: (st.vip && st.vip.vipExpiresAt) ? Date.parse(st.vip.vipExpiresAt) : (Date.now() + days * 86400000)
+            };
+            lsSet('adbr_mob_voucher_v6', app.voucher);
+            if (app.member) { app.member.isVipActive = true; app.member.tier = 'VIP'; lsSet('adbr_mob_member_v6', app.member); }
+            closeOverlay('vipSheet');
+            renderAll();
+            triggerDeviceNotif('Pembayaran Berhasil! VIP Aktif ★', `Paket ${app.voucher.planName} aktif otomatis. Selamat menonton!`, 'VIP AKTIF');
+          }
+        } catch {}
+      }, 5000);
+    }
+
+    async function submitPaymentProof() {
+      if (!app.activeInvoice) return;
+      const ref = (document.getElementById('payRefInput').value || '').trim();
+      if (app.config.backendWebAppUrl) {
+        try {
+          await gasPost('/api/payments/submit-proof', { invoiceNumber: app.activeInvoice.invoice_number, reference: ref });
+          document.getElementById('payStatusPill').textContent = 'VERIFIKASI';
+          toast('Konfirmasi terkirim! Begitu pembayaran terverifikasi, VIP langsung aktif otomatis.', 'vip');
+          return;
+        } catch (err) { toast(err.message, 'error'); return; }
+      }
+      sendPaymentWaHelp();
+    }
+
+    function sendPaymentWaHelp() {
+      const inv = app.activeInvoice;
+      if (!inv) return;
+      openWhatsAppAdmin(`Halo Admin Animedubar, saya sudah bayar via ${inv.method} untuk ${inv.plan_name} (Rp ${Number(inv.payable_amount_idr).toLocaleString('id-ID')}) — Invoice: ${inv.invoice_number}. Mohon aktivasi VIP otomatis.`);
+    }
+
+    async function redeemVoucher(e) {
+      e.preventDefault();
+      const code = document.getElementById('voucherInp').value.trim().toUpperCase();
+      if (app.config.backendWebAppUrl) {
+        try {
+          const data = await gasPost('/api/vouchers/redeem', { code });
+          app.voucher = { code: data.code, planId: data.durationDays >= 300 ? 'yearly' : data.durationDays >= 80 ? 'quarterly' : 'monthly', planName: data.planName, expiresAt: Date.parse(data.expiresAt) || (Date.now() + data.durationDays * 86400000) };
+          lsSet('adbr_mob_voucher_v6', app.voucher);
+          toast('VIP aktif via Backend Apps Script!', 'vip');
+          switchVipTab('voucher'); renderAll(); return;
+        } catch (err) { toast(err.message, 'error'); return; }
+      }
+      const found = (app.config.vouchers || []).find(v => v.code.toUpperCase() === code && v.status === 'ACTIVE');
+      if (!found) { toast('Kode voucher tidak ditemukan.', 'error'); return; }
+      app.voucher = { code: found.code, planId: found.planId || 'monthly', planName: found.planName, expiresAt: Date.now() + (found.durationDays || 30) * 86400000 };
+      lsSet('adbr_mob_voucher_v6', app.voucher);
+      toast('Selamat! ' + found.planName + ' aktif!', 'vip');
+      switchVipTab('voucher'); renderAll();
+    }
+
+    function logoutVoucher() { app.voucher = null; lsSet('adbr_mob_voucher_v6', null); switchVipTab('voucher'); renderAll(); toast('Sesi VIP dikeluarkan.'); }
+
+    function openWhatsAppAdmin(text) {
+      const wa = String(app.config.whatsappNumber || '6281234567890').replace(/[^0-9]/g, '');
+      window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function openAuthSheet() {
+      if (app.member) { app.member = null; lsSet('adbr_mob_member_v6', null); renderAll(); toast('Berhasil logout.'); return; }
+      document.getElementById('authSheet').classList.remove('hidden');
+    }
+
+    async function submitAppLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim().toLowerCase();
+      const password = document.getElementById('authPass').value;
+      if (!app.config.backendWebAppUrl) { toast('Isi URL Server Backend di tab Saya terlebih dahulu.', 'error'); return; }
+      try {
+        const data = await gasPost('/api/auth/login', { email, password });
+        app.member = Object.assign({}, data.user, { token: data.token });
+        lsSet('adbr_mob_member_v6', app.member);
+        closeOverlay('authSheet'); renderAll(); toast('Selamat datang ' + app.member.displayName + '!', 'vip');
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    /* =========================================================================
+       APPS SCRIPT SYNC + REAL-TIME NOTIFICATION POLLER
+       ========================================================================= */
+    async function gasPost(path, body={}) {
+      const res = await fetch(app.config.backendWebAppUrl, {
         method: 'POST', redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ path, method: 'POST', token: (st.session && st.session.token) || '', body })
+        body: JSON.stringify({ path, method: 'POST', token: (app.member && app.member.token) || '', body })
       });
       const data = await res.json();
-      if (!res.ok || data.ok === false) throw new Error(data.error || 'Error Apps Script');
+      if (!res.ok || data.ok === false) throw new Error(data.error || 'Gagal terhubung ke server');
       return data;
     }
 
-    /* ----- SECURITY: LOGIN, PIN LOCK & IDLE TIMEOUT ----- */
-    async function handleAdminLogin(e) {
-      e.preventDefault();
-      const btn = document.getElementById('admLoginBtn');
-      const url = document.getElementById('admGasUrl').value.trim();
-      const email = document.getElementById('admEmail').value.trim().toLowerCase();
-      const password = document.getElementById('admPass').value;
-      const totpCode = document.getElementById('admTotp').value.trim();
-      btn.disabled = true; btn.textContent = 'Memverifikasi...';
+    async function syncFromBackend(silent=true) {
+      if (!app.config.backendWebAppUrl) return;
       try {
-        st.gasUrl = url;
-        lsSet('adbr_adm_gas_v5', url);
-        const resp = await gasCall('/api/auth/login', { email, password, totpCode });
-        const role = String((resp.user && resp.user.role) || 'USER').toUpperCase();
-        if (role === 'USER') throw new Error('Akun ini bukan Admin. Akses CMS ditolak!');
-        st.session = { token: resp.token, user: resp.user, offline: false };
-        lsSet('adbr_adm_sess_v5', st.session);
-        document.getElementById('adminLoginGate').classList.add('hidden');
-        await refreshAdminData(true);
-        toast('Login Admin terverifikasi (' + role + ')!', 'ok');
-      } catch (err) {
-        toast(err.message, 'err');
-      } finally {
-        btn.disabled = false; btn.textContent = 'Masuk ke Panel Admin';
-      }
-    }
-
-    function enterOfflineDemoAdmin() {
-      st.session = { token: '', user: { email: 'owner@offline', displayName: 'Owner Preview', role: 'SUPER_ADMIN' }, offline: true };
-      lsSet('adbr_adm_sess_v5', st.session);
-      document.getElementById('adminLoginGate').classList.add('hidden');
-      renderWorkspace();
-      toast('Mode Preview Offline aktif. Hubungkan Apps Script di tab Sistem untuk data live.', 'info');
-    }
-
-    function logoutAdminSession() {
-      st.session = null;
-      lsSet('adbr_adm_sess_v5', null);
-      document.getElementById('pinLockOverlay').classList.add('hidden');
-      document.getElementById('adminLoginGate').classList.remove('hidden');
-      toast('Sesi Admin telah keluar.', 'info');
-    }
-
-    function lockAppNow() {
-      if (!st.pinHash) {
-        toast('Atur PIN Kunci 6 digit dulu di tab Sistem.', 'info');
-        switchTab('system');
-        return;
-      }
-      document.getElementById('pinUnlockInput').value = '';
-      document.getElementById('pinLockOverlay').classList.remove('hidden');
-    }
-
-    function verifyAppLockPin() {
-      const inp = document.getElementById('pinUnlockInput').value.trim();
-      if (btoa(inp) === st.pinHash) {
-        document.getElementById('pinLockOverlay').classList.add('hidden');
-        st.lastActivity = Date.now();
-        toast('Kunci dibuka.', 'ok');
-      } else {
-        toast('PIN salah!', 'err');
-      }
-    }
-
-    function saveAppLockPin(e) {
-      e.preventDefault();
-      const pin = document.getElementById('sysPinInput').value.trim();
-      if (!/^\d{6}$/.test(pin)) { toast('PIN harus tepat 6 angka.', 'err'); return; }
-      st.pinHash = btoa(pin);
-      lsSet('adbr_adm_pin_v5', st.pinHash);
-      e.target.reset();
-      toast('PIN Kunci Aplikasi 6 digit aktif! Auto-lock 5 menit idle.', 'ok');
-    }
-
-    ['click','touchstart','keydown'].forEach(ev => window.addEventListener(ev, () => { st.lastActivity = Date.now(); }, { passive:true }));
-    setInterval(() => {
-      if (st.session && st.pinHash && Date.now() - st.lastActivity > 5 * 60 * 1000) {
-        document.getElementById('pinLockOverlay').classList.remove('hidden');
-      }
-    }, 15000);
-
-    /* ----- DATA SYNC FROM APPS SCRIPT ----- */
-    async function refreshAdminData(silent=false) {
-      if (!st.gasUrl || !st.session || st.session.offline) {
-        renderWorkspace();
-        return;
-      }
-      try {
-        const [boot, adm] = await Promise.all([
-          gasCall('/api/bootstrap', {}),
-          gasCall('/api/admin/state', {})
-        ]);
-        st.data.catalog = boot.catalog || [];
-        st.data.episodes = boot.episodes || [];
-        st.data.users = adm.users || [];
-        st.data.transactions = adm.transactions || [];
-        st.data.promos = adm.promos || [];
-        st.data.videoJobs = adm.videoJobs || [];
-        st.data.driveLogs = adm.driveLogs || [];
-        st.data.auditLogs = adm.auditLogs || [];
-        st.data.notifications = adm.notifications || [];
-        lsSet('adbr_adm_cache_v5', st.data);
-        renderWorkspace();
-        if (!silent) toast('Data aktual tersinkronisasi dari Apps Script!', 'ok');
-      } catch (err) {
-        if (!silent) toast('Sync error: ' + err.message, 'err');
-      }
-    }
-
-    /* ----- NAVIGATION & RBAC ----- */
-    function hasPerm(tab) {
-      const role = (st.session && st.session.user && st.session.user.role) || 'SUPER_ADMIN';
-      const allow = RBAC[role] || [];
-      return allow.includes('*') || allow.includes(tab);
-    }
-
-    function switchTab(tab) {
-      st.tab = tab;
-      document.querySelectorAll('.atab').forEach(b => {
-        const active = b.getAttribute('data-atab') === tab;
-        b.className = active ? 'atab flex flex-col items-center gap-0.5 text-amber-400' : 'atab flex flex-col items-center gap-0.5 text-zinc-400';
-      });
-      renderWorkspace();
-      window.scrollTo({ top:0, behavior:'smooth' });
-    }
-
-    function renderWorkspace() {
-      const role = (st.session && st.session.user && st.session.user.role) || 'SUPER_ADMIN';
-      document.getElementById('hdrRoleBadge').textContent = `${role} · ${st.session && !st.session.offline ? 'Apps Script Live' : 'Mode Offline'}`;
-      const ws = document.getElementById('adminWorkspace');
-
-      if (!hasPerm(st.tab)) {
-        ws.innerHTML = `<div class="p-6 rounded-2xl bg-red-950/40 border border-red-500/40 text-center space-y-1"><p class="text-sm font-black text-red-300">Akses Ditolak (RBAC)</p><p class="text-zinc-300">Role ${esc(role)} tidak memiliki izin untuk tab ini.</p></div>`;
-        return;
-      }
-
-      if (st.tab === 'dashboard') renderDashboard(ws);
-      else if (st.tab === 'content') renderContentTab(ws);
-      else if (st.tab === 'drive') renderDriveTab(ws);
-      else if (st.tab === 'commerce') renderCommerceTab(ws);
-      else if (st.tab === 'system') renderSystemTab(ws);
-    }
-
-    /* ----- TAB 1: DASHBOARD ----- */
-    function renderDashboard(ws) {
-      const d = st.data;
-      const animeCnt = d.catalog.filter(c => String(c.type).toLowerCase() !== 'movie').length;
-      const movieCnt = d.catalog.filter(c => String(c.type).toLowerCase() === 'movie').length;
-      const vipCnt = d.users.filter(u => u.tier === 'VIP').length;
-      const rev = d.transactions.filter(t => t.status === 'PAID').reduce((s,t) => s + Number(t.finalAmount||0), 0);
-
-      const cards = [
-        ['Total Anime', animeCnt, 'text-white'], ['Total Film', movieCnt, 'text-white'],
-        ['Total Episode', d.episodes.length, 'text-white'], ['Total User', d.users.length, 'text-white'],
-        ['VIP Aktif', vipCnt, 'text-amber-400'], ['Pengguna Gratis', Math.max(0, d.users.length - vipCnt), 'text-zinc-300'],
-        ['Transaksi', d.transactions.length, 'text-white'], ['Pendapatan PAID', 'Rp ' + rev.toLocaleString('id-ID'), 'text-emerald-400']
-      ];
-
-      ws.innerHTML = `
-        <div class="flex items-center justify-between gap-2">
-          <h2 class="text-base font-black text-white">Statistik Aktual</h2>
-          <div class="flex gap-1">
-            ${[['day','Hari'],['week','Minggu'],['month','Bulan'],['year','Tahun']].map(([k,l]) =>
-              `<button type="button" onclick="st.period='${k}'; renderWorkspace()" class="px-2.5 py-1 rounded-lg font-bold text-[10px] ${st.period===k?'bg-brand text-white':'bg-white/10 text-zinc-300'}">${l}</button>`
-            ).join('')}
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2.5">
-          ${cards.map(([k,v,cls]) => `<div class="p-3.5 rounded-2xl bg-panel border border-white/10"><p class="text-[10px] text-zinc-400 uppercase font-bold">${k}</p><p class="text-lg font-black ${cls} mt-0.5">${esc(v)}</p></div>`).join('')}
-        </div>
-        <div class="p-4 rounded-2xl bg-panel border border-white/10 space-y-2">
-          <h3 class="font-extrabold text-amber-300">Status Queue Video &amp; Storage</h3>
-          <p class="text-zinc-300">Total Job Drive: <strong>${d.videoJobs.length}</strong> · Siap Tayang: <strong>${d.videoJobs.filter(j=>j.status==='READY').length}</strong></p>
-          <p class="text-[11px] text-zinc-400">Database: Google Sheets (12 Tab via Apps Script) · Master Video: Private Google Drive</p>
-        </div>`;
-    }
-
-    /* ----- TAB 2: KONTEN & DUAL SUB PREVIEW ----- */
-    function renderContentTab(ws) {
-      ws.innerHTML = `
-        <form onsubmit="submitNewContent(event)" class="p-4 rounded-2xl bg-panel border border-white/10 space-y-3">
-          <h3 class="text-sm font-extrabold text-white">+ Tambah Anime / Film Baru</h3>
-          <input id="cTitle" required placeholder="Judul Indonesia *" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white" />
-          <input id="cTitleAr" dir="rtl" required placeholder="Judul Arab (العربية) *" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-amber-300 font-arabic" />
-          <div class="grid grid-cols-2 gap-2">
-            <select id="cKind" class="bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white"><option value="ANIME">Anime</option><option value="MOVIE">Movie</option><option value="SERIES">Series</option><option value="OVA">OVA</option><option value="SPECIAL">Special</option></select>
-            <select id="cPub" class="bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white"><option value="PUBLISHED">Published</option><option value="DRAFT">Draft</option><option value="SCHEDULED">Scheduled</option><option value="UPCOMING">Upcoming</option></select>
-          </div>
-          <input id="cDrive" placeholder="Link / File ID Google Drive Episode 1" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-emerald-300 font-mono" />
-          <textarea id="cSyn" rows="2" placeholder="Sinopsis..." class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white"></textarea>
-          <div class="flex items-center justify-between">
-            <label class="inline-flex items-center gap-2"><input id="cVip" type="checkbox" class="accent-amber-400 w-4 h-4" /><span class="text-amber-300 font-bold">Konten VIP</span></label>
-            <button type="submit" class="px-4 py-2 rounded-xl bg-brand text-white font-bold">Simpan ke Database</button>
-          </div>
-        </form>
-
-        <div class="p-4 rounded-2xl bg-panel border border-white/10 space-y-2.5">
-          <h3 class="font-extrabold text-amber-300">Live Preview Dual Subtitle (RTL Arab + Indo)</h3>
-          <input id="subPrevArInp" dir="rtl" value="الحقيقة دائماً واحدة مهما كانت الألغاز معقدة!" oninput="document.getElementById('subOutAr').textContent=this.value" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 font-arabic text-amber-300" />
-          <input id="subPrevIdInp" value="Kebenaran selalu hanya satu, serumit apa pun misterinya!" oninput="document.getElementById('subOutId').textContent=this.value" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white" />
-          <div class="p-4 rounded-xl bg-black border border-white/10 text-center space-y-1">
-            <div id="subOutAr" dir="rtl" class="font-arabic font-bold text-base text-amber-300">الحقيقة دائماً واحدة مهما كانت الألغاز معقدة!</div>
-            <div id="subOutId" class="font-sans font-semibold text-xs text-white">Kebenaran selalu hanya satu, serumit apa pun misterinya!</div>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <h3 class="font-extrabold text-white">Daftar Katalog (${st.data.catalog.length})</h3>
-          ${st.data.catalog.length ? st.data.catalog.slice(0,25).map(c => `
-            <div class="p-3 rounded-xl bg-panel border border-white/10 flex items-center justify-between gap-2">
-              <div class="min-w-0">
-                <p class="font-bold text-white truncate">${esc(c.title)}</p>
-                <p class="text-[10px] text-zinc-400">${esc(c.publishStatus||'PUBLISHED')} · ${String(c.isVip).toUpperCase()==='TRUE'?'VIP':'GRATIS'}</p>
-              </div>
-              <button type="button" onclick="togglePublish('${esc(c.id)}','${String(c.publishStatus)==='ARCHIVED'?'PUBLISHED':'ARCHIVED'}')" class="px-2.5 py-1 rounded-lg bg-white/10 text-zinc-200 font-bold shrink-0">${String(c.publishStatus)==='ARCHIVED'?'Publish':'Arsip'}</button>
-            </div>`).join('') : '<p class="p-4 rounded-xl bg-panel text-center text-zinc-500">Belum ada konten di Spreadsheet.</p>'}
-        </div>`;
-    }
-
-    async function submitNewContent(e) {
-      e.preventDefault();
-      const title = document.getElementById('cTitle').value.trim();
-      const kind = document.getElementById('cKind').value;
-      const item = {
-        id: 'cnt-' + Date.now(),
-        title,
-        arabicTitle: document.getElementById('cTitleAr').value.trim(),
-        type: kind === 'MOVIE' ? 'movie' : 'anime',
-        kind,
-        publishStatus: document.getElementById('cPub').value,
-        isVip: document.getElementById('cVip').checked,
-        synopsis: document.getElementById('cSyn').value.trim(),
-        seasons: [{ seasonNumber:1, title:'Season 1', episodes:[{ ep:1, title:'Episode 1', duration:'24 mnt', isVip:document.getElementById('cVip').checked, driveSubId: extractDriveId(document.getElementById('cDrive').value) }] }]
-      };
-      try {
-        if (st.session && !st.session.offline) await gasCall('/api/admin/contents', { item });
-        st.data.catalog.unshift({ id:item.id, title:item.title, titleAr:item.arabicTitle, type:item.type, publishStatus:item.publishStatus, isVip:item.isVip?'TRUE':'FALSE' });
-        lsSet('adbr_adm_cache_v5', st.data);
-        e.target.reset(); renderWorkspace(); toast('Konten tersimpan!', 'ok');
-      } catch (err) { toast(err.message, 'err'); }
-    }
-
-    async function togglePublish(id, nextState) {
-      try {
-        if (st.session && !st.session.offline) await gasCall('/api/admin/contents/' + encodeURIComponent(id) + '/status', { publishStatus: nextState });
-        const it = st.data.catalog.find(c => c.id === id);
-        if (it) it.publishStatus = nextState;
-        renderWorkspace(); toast('Status diubah ke ' + nextState, 'ok');
-      } catch (err) { toast(err.message, 'err'); }
-    }
-
-    /* ----- TAB 3: GOOGLE DRIVE & JOBS ----- */
-    function renderDriveTab(ws) {
-      ws.innerHTML = `
-        <form onsubmit="submitDriveImport(event)" class="p-4 rounded-2xl bg-panel border border-emerald-500/30 space-y-3">
-          <h3 class="text-sm font-extrabold text-emerald-300">Import &amp; Validasi Video Private Google Drive</h3>
-          <input id="dEpId" required placeholder="ID Konten / Episode Target" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white" />
-          <input id="dFileId" required placeholder="Tempel Link Share atau File ID Google Drive" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-amber-300 font-mono" />
-          <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold">Validasi di Server Apps Script</button>
-        </form>
-        <div class="space-y-2">
-          <h3 class="font-extrabold text-white">Antrian &amp; Status Video Jobs (${st.data.videoJobs.length})</h3>
-          ${st.data.videoJobs.map(j => `
-            <div class="p-3 rounded-xl bg-panel border border-white/10 flex items-center justify-between gap-2">
-              <div class="min-w-0"><p class="font-bold text-white truncate">${esc(j.title||j.fileName)}</p><p class="text-[10px] text-zinc-400">${esc(j.status)} · ${esc(j.stage)}</p></div>
-              <button type="button" onclick="retryJob('${esc(j.id)}')" class="px-2.5 py-1 rounded-lg bg-white/10 font-bold">Retry</button>
-            </div>`).join('') || '<p class="p-4 rounded-xl bg-panel text-center text-zinc-500">Belum ada job Drive.</p>'}
-        </div>`;
-    }
-
-    async function submitDriveImport(e) {
-      e.preventDefault();
-      const episodeId = document.getElementById('dEpId').value.trim();
-      const gdriveFileId = extractDriveId(document.getElementById('dFileId').value);
-      try {
-        if (st.session && !st.session.offline) {
-          const resp = await gasCall('/api/drive/import', { episodeId, gdriveFileId, mode: 'FILE_ID' });
-          st.data.videoJobs.unshift(resp.job);
-        } else {
-          st.data.videoJobs.unshift({ id:'job-'+Date.now(), title:gdriveFileId, status:'READY', stage:'OFFLINE_PREVIEW' });
+        const data = await gasPost('/api/bootstrap', {});
+        if (Array.isArray(data.catalog) && data.catalog.length) {
+          const epMap = new Map();
+          (data.episodes || []).forEach(e => {
+            if (!epMap.has(e.contentId)) epMap.set(e.contentId, []);
+            epMap.get(e.contentId).push({ ep: Number(e.epNumber||1), title: e.title||'Episode', duration: e.duration||'24 mnt', isVip: String(e.isVip).toUpperCase()==='TRUE', driveSubId: e.gdriveSubId||'DEMO', driveSubAr: e.gdriveSubAr||e.gdriveSubId||'DEMO', driveDual: e.gdriveDualSub||e.gdriveSubId||'DEMO', hlsUrl: e.hlsUrl||'' });
+          });
+          app.config.catalog = data.catalog.map((c, idx) => ({
+            id: c.id || ('cat-' + idx), title: c.title, arabicTitle: c.titleAr || 'مدبلج عربي',
+            type: String(c.type||'anime').toLowerCase().includes('movie') ? 'movie' : 'anime',
+            year: Number(c.year||2026), rating: String(c.rating||'9.1'), quality: 'HD 1080p',
+            featured: String(c.isFeatured).toUpperCase()==='TRUE', topRank: Number(c.top10Rank||0) || null,
+            isVip: String(c.isVip).toUpperCase()==='TRUE',
+            genres: String(c.genres||'Aksi, Dub Arab').split(',').map(s=>s.trim()).filter(Boolean),
+            posterUrl: c.poster||'', backdropUrl: c.backdrop||'', synopsis: c.synopsis||'',
+            theme: { c1:'#1d4ed8', c2:'#090d1a', accent:'#ef4444' },
+            seasons: [{ seasonNumber:1, title:'Season 1', episodes: epMap.get(c.id) || [{ ep:1, title:'Episode 1', duration:'24 mnt', isVip:String(c.isVip).toUpperCase()==='TRUE', driveSubId:'DEMO_EP' }] }]
+          }));
         }
-        e.target.reset(); renderWorkspace(); toast('File Google Drive divalidasi!', 'ok');
-      } catch (err) { toast(err.message, 'err'); }
-    }
 
-    async function retryJob(jobId) {
-      try {
-        if (st.session && !st.session.offline) await gasCall('/api/drive/jobs/' + encodeURIComponent(jobId) + '/retry', {});
-        toast('Job dijadwalkan ulang!', 'ok'); refreshAdminData(true);
-      } catch (err) { toast(err.message, 'err'); }
-    }
+        // Sync CMS Branding, Payment & Quotas settings from Pengaturan sheet
+        const sMap = {};
+        (data.settings || []).forEach(s => { if (s.key) sMap[s.key] = String(s.value || '').trim(); });
+        if (sMap.brandName) app.config.brandName = sMap.brandName;
+        if (sMap.whatsapp) app.config.whatsappNumber = sMap.whatsapp;
+        if (sMap.logoUrl !== undefined) app.config.logoUrl = sMap.logoUrl;
+        if (sMap.faviconUrl !== undefined) app.config.faviconUrl = sMap.faviconUrl;
+        if (sMap.themeAccent) app.config.themeAccent = sMap.themeAccent;
+        if (sMap.qrisImageUrl !== undefined) app.config.qrisImageUrl = sMap.qrisImageUrl;
+        if (sMap.bankName) app.config.bankName = sMap.bankName;
+        if (sMap.bankAccountNumber) app.config.bankAccountNumber = sMap.bankAccountNumber;
+        if (sMap.bankAccountHolder) app.config.bankAccountHolder = sMap.bankAccountHolder;
+        if (sMap.vipPriceMonthly && app.config.vipPlans[0]) app.config.vipPlans[0].price = sMap.vipPriceMonthly;
+        if (sMap.vipPriceQuarterly && app.config.vipPlans[1]) app.config.vipPlans[1].price = sMap.vipPriceQuarterly;
+        if (sMap.vipPriceYearly && app.config.vipPlans[2]) app.config.vipPlans[2].price = sMap.vipPriceYearly;
+        app.config.offlineQuotas = {
+          FREE: Number(sMap.offlineQuotaFree || 0),
+          monthly: Number(sMap.offlineQuotaMonthly || 5),
+          quarterly: Number(sMap.offlineQuotaQuarterly || 15),
+          yearly: Number(sMap.offlineQuotaYearly || 50)
+        };
+        if (sMap.notifPollSeconds) app.config.notifPollSeconds = Math.max(15, Number(sMap.notifPollSeconds));
 
-    /* ----- TAB 4: VIP VOUCHERS, PAYMENTS & USERS ----- */
-    function renderCommerceTab(ws) {
-      const sub = st.subTabCommerce;
-      ws.innerHTML = `
-        <div class="grid grid-cols-3 gap-1.5 font-bold">
-          <button type="button" onclick="st.subTabCommerce='vouchers'; renderWorkspace()" class="py-2 rounded-xl ${sub==='vouchers'?'vip-gradient text-black':'bg-panel text-zinc-300'}">Voucher VIP</button>
-          <button type="button" onclick="st.subTabCommerce='payments'; renderWorkspace()" class="py-2 rounded-xl ${sub==='payments'?'vip-gradient text-black':'bg-panel text-zinc-300'}">Transaksi (${st.data.transactions.length})</button>
-          <button type="button" onclick="st.subTabCommerce='users'; renderWorkspace()" class="py-2 rounded-xl ${sub==='users'?'vip-gradient text-black':'bg-panel text-zinc-300'}">Users (${st.data.users.length})</button>
-        </div>
-        <div id="commerceSubBody" class="space-y-3"></div>`;
+        // Incoming Notifications Detection -> Pop on Screen + OS Push!
+        if (Array.isArray(data.notifications) && data.notifications.length) {
+          const incoming = data.notifications.map(n => ({
+            id: n.id, category: n.category || 'INFO', title: n.title || 'Update Animedubar', body: n.body || '',
+            read: app.seenNotifIds.includes(n.id), createdAt: Date.parse(n.createdAt) || Date.now()
+          }));
+          const brandNew = incoming.filter(n => !app.seenNotifIds.includes(n.id));
+          if (brandNew.length) {
+            triggerDeviceNotif(brandNew[0].title, brandNew[0].body, brandNew[0].category);
+            brandNew.forEach(n => app.seenNotifIds.push(n.id));
+            lsSet('adbr_mob_seen_ntf_v6', app.seenNotifIds.slice(-100));
+          }
+          app.notifs = incoming;
+          lsSet('adbr_mob_notifs_v6', app.notifs);
+        }
 
-      const body = document.getElementById('commerceSubBody');
-      if (sub === 'vouchers') {
-        body.innerHTML = `
-          <form onsubmit="createPromoOrVoucher(event)" class="p-4 rounded-2xl bg-panel border border-amber-500/30 space-y-2.5">
-            <div class="flex justify-between items-center"><h4 class="font-extrabold text-amber-400">Generator Kode Voucher &amp; Salin WA</h4><button type="button" onclick="genRandomCode()" class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-bold">Acak Kode</button></div>
-            <input id="vCode" required placeholder="ADBR-XXXX-XXXX" oninput="this.value=this.value.toUpperCase()" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 font-mono font-bold text-amber-300" />
-            <div class="grid grid-cols-2 gap-2">
-              <input id="vPlan" value="VIP Bulanan 30 Hari" class="bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white" />
-              <input id="vDays" type="number" value="30" class="bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white" />
-            </div>
-            <button type="submit" class="w-full py-2.5 rounded-xl vip-gradient text-black font-extrabold">Buat Voucher &amp; Salin Pesan WA</button>
-          </form>
-          <form onsubmit="submitPromo(event)" class="p-4 rounded-2xl bg-panel border border-white/10 flex gap-2">
-            <input id="pCode" required placeholder="Kode Promo (cth: ARAB20)" oninput="this.value=this.value.toUpperCase()" class="flex-1 bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 font-mono text-amber-300" />
-            <input id="pPct" type="number" value="20" min="1" max="100" class="w-16 bg-[#0a0d14] border border-white/10 rounded-xl px-2 py-2 text-white" />
-            <button type="submit" class="px-3.5 py-2 rounded-xl bg-brand text-white font-bold">+ Promo</button>
-          </form>`;
-      } else if (sub === 'payments') {
-        body.innerHTML = st.data.transactions.length ? st.data.transactions.map(t => `
-          <div class="p-3.5 rounded-xl bg-panel border border-white/10 space-y-2">
-            <div class="flex justify-between"><strong class="font-mono text-amber-300">${esc(t.invoiceNumber)}</strong><span class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-black">${esc(t.status)}</span></div>
-            <p class="text-zinc-400">${esc(t.userEmail)} · ${esc(t.planName)} · Rp ${Number(t.finalAmount||0).toLocaleString('id-ID')}</p>
-            <div class="flex gap-2">
-              <button type="button" onclick="setPayment('${esc(t.invoiceNumber)}','PAID')" class="flex-1 py-1.5 rounded-lg bg-emerald-600/25 text-emerald-300 font-bold">Konfirmasi PAID</button>
-              <button type="button" onclick="setPayment('${esc(t.invoiceNumber)}','REFUNDED')" class="px-3 py-1.5 rounded-lg bg-red-600/20 text-red-300 font-bold">Refund</button>
-            </div>
-          </div>`).join('') : '<p class="p-5 rounded-xl bg-panel text-center text-zinc-500">Belum ada transaksi.</p>';
-      } else {
-        body.innerHTML = st.data.users.length ? st.data.users.map(u => `
-          <div class="p-3.5 rounded-xl bg-panel border border-white/10 space-y-2">
-            <div class="flex justify-between"><strong class="text-white">${esc(u.displayName)}</strong><span class="px-2 py-0.5 rounded text-[10px] font-black ${u.tier==='VIP'?'vip-gradient text-black':'bg-white/10 text-zinc-200'}">${esc(u.tier)}</span></div>
-            <p class="text-zinc-400">${esc(u.email)} · Status: ${esc(u.status)}</p>
-            <div class="flex gap-1.5">
-              <button type="button" onclick="setUser('${esc(u.id)}','VIP','ACTIVE')" class="flex-1 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 font-bold">+30h VIP Manual</button>
-              <button type="button" onclick="setUser('${esc(u.id)}',null,'SUSPENDED')" class="px-2.5 py-1.5 rounded-lg bg-white/10 text-zinc-200 font-bold">Suspend</button>
-              <button type="button" onclick="setUser('${esc(u.id)}',null,'BANNED')" class="px-2.5 py-1.5 rounded-lg bg-red-600/20 text-red-300 font-bold">Ban</button>
-            </div>
-          </div>`).join('') : '<p class="p-5 rounded-xl bg-panel text-center text-zinc-500">Belum ada pengguna.</p>';
+        lsSet('adbr_mob_cfg_v6', app.config);
+        applyDynamicBranding();
+        renderAll();
+        if (!silent) toast('Aplikasi tersinkronisasi dengan Server!', 'vip');
+      } catch (err) {
+        if (!silent) toast('Sync gagal: ' + err.message, 'error');
       }
     }
 
-    function genRandomCode() {
-      const ch = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      const mk = () => Array.from({length:4}, () => ch[Math.floor(Math.random()*ch.length)]).join('');
-      document.getElementById('vCode').value = `ADBR-${mk()}-${mk()}`;
+    function saveAppBackendUrl() {
+      app.config.backendWebAppUrl = document.getElementById('appGasUrlInput').value.trim();
+      lsSet('adbr_mob_cfg_v6', app.config);
+      syncFromBackend(false);
+      startNotificationPoller();
     }
 
-    function createPromoOrVoucher(e) {
-      e.preventDefault();
-      const code = document.getElementById('vCode').value.trim().toUpperCase();
-      const plan = document.getElementById('vPlan').value.trim();
-      const days = Number(document.getElementById('vDays').value) || 30;
-      const msg = `Terima kasih berlangganan *Animedubar VIP*!\n\nPaket: *${plan}* (${days} Hari)\nKode Voucher: *${code}*\n\nCara Aktivasi:\n1. Buka Aplikasi HP Animedubar\n2. Ketuk tombol *★ VIP* → *Login Voucher VIP*\n3. Masukkan kode *${code}*`;
-      copyText(msg, `Voucher ${code} & pesan WA disalin! Tempel baris kode di tab Voucher Sheets.`);
+    function startNotificationPoller() {
+      clearInterval(app.notifPollTimer);
+      const sec = Math.max(15, Number(app.config.notifPollSeconds || 45));
+      app.notifPollTimer = setInterval(() => {
+        if (app.config.backendWebAppUrl) syncFromBackend(true);
+      }, sec * 1000);
     }
 
-    async function submitPromo(e) {
-      e.preventDefault();
-      const code = document.getElementById('pCode').value.trim().toUpperCase();
-      const discountPct = Number(document.getElementById('pPct').value) || 20;
-      try {
-        if (st.session && !st.session.offline) await gasCall('/api/admin/promos', { code, discountPct });
-        toast(`Promo ${code} (${discountPct}%) tersimpan!`, 'ok'); e.target.reset();
-      } catch (err) { toast(err.message, 'err'); }
+    function toggleMyList(id) {
+      app.myList = app.myList.includes(id) ? app.myList.filter(x => x !== id) : [id, ...app.myList];
+      lsSet('adbr_mob_list_v6', app.myList);
+      renderAll();
+      toast(app.myList.includes(id) ? 'Ditambahkan ke Daftar Saya' : 'Dihapus dari Daftar Saya');
     }
 
-    async function setPayment(inv, status) {
-      try {
-        if (st.session && !st.session.offline) await gasCall('/api/admin/payments/' + encodeURIComponent(inv) + '/status', { status });
-        toast(`Invoice ${inv} → ${status}`, 'ok'); refreshAdminData(true);
-      } catch (err) { toast(err.message, 'err'); }
-    }
-
-    async function setUser(uid, tier, status) {
-      try {
-        if (st.session && !st.session.offline) await gasCall('/api/admin/users/' + encodeURIComponent(uid) + '/update', { tier, status, days:30 });
-        toast('User diperbarui!', 'ok'); refreshAdminData(true);
-      } catch (err) { toast(err.message, 'err'); }
-    }
-
-    /* ----- TAB 5: SISTEM, BROADCAST, AUDIT & PIN KEAMANAN ----- */
-    function renderSystemTab(ws) {
-      ws.innerHTML = `
-        <form onsubmit="sendBroadcast(event)" class="p-4 rounded-2xl bg-panel border border-white/10 space-y-2.5">
-          <h3 class="text-sm font-extrabold text-white">Kirim Broadcast Notifikasi ke Aplikasi Pelanggan</h3>
-          <input id="bcT" required placeholder="Judul Pengumuman / Episode Baru *" class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white" />
-          <textarea id="bcB" required rows="2" placeholder="Isi pesan..." class="w-full bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 text-white"></textarea>
-          <button type="submit" class="w-full py-2.5 rounded-xl bg-brand text-white font-bold">Kirim Broadcast</button>
-        </form>
-
-        <form onsubmit="saveAppLockPin(event)" class="p-4 rounded-2xl bg-panel border border-amber-500/30 space-y-2.5">
-          <h3 class="text-sm font-extrabold text-amber-300">Keamanan HP Admin — Kunci PIN 6 Digit</h3>
-          <p class="text-[11px] text-zinc-400">Otomatis mengunci aplikasi CMS jika HP tidak aktif 5 menit.</p>
-          <div class="flex gap-2">
-            <input id="sysPinInput" type="password" inputmode="numeric" maxlength="6" required placeholder="6 digit angka" class="flex-1 bg-[#0a0d14] border border-white/10 rounded-xl px-3 py-2 font-mono text-amber-300" />
-            <button type="submit" class="px-4 py-2 rounded-xl vip-gradient text-black font-extrabold">Simpan PIN</button>
-          </div>
-        </form>
-
-        <div class="p-4 rounded-2xl bg-panel border border-white/10 space-y-2">
-          <h3 class="font-extrabold text-white">Audit Log Terbaru (${st.data.auditLogs.length})</h3>
-          ${st.data.auditLogs.slice(0,10).map(a => `<div class="py-1.5 border-b border-white/5 text-[11px]"><strong class="text-amber-300">${esc(a.role)}</strong> · ${esc(a.action)} (${esc(a.entityId)})</div>`).join('') || '<p class="text-zinc-500">Belum ada audit log.</p>'}
-        </div>
-
-        <button type="button" onclick="logoutAdminSession()" class="w-full py-3 rounded-2xl bg-red-600/20 border border-red-500/40 text-red-200 font-extrabold">Logout Sesi Admin</button>`;
-    }
-
-    async function sendBroadcast(e) {
-      e.preventDefault();
-      try {
-        if (st.session && !st.session.offline) await gasCall('/api/admin/notifications/broadcast', { title: document.getElementById('bcT').value.trim(), body: document.getElementById('bcB').value.trim(), category:'BROADCAST' });
-        e.target.reset(); toast('Broadcast berhasil dikirim!', 'ok');
-      } catch (err) { toast(err.message, 'err'); }
+    function closeOverlay(id) {
+      if (id === 'vipSheet') clearInterval(app.payPollTimer);
+      document.getElementById(id).classList.add('hidden');
     }
 
     /* ----- PWA INSTALL ----- */
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      st.deferredInstall = e;
-      document.getElementById('admInstallBtn').classList.remove('hidden');
+      app.deferredInstall = e;
+      document.getElementById('pwaInstallBanner').classList.remove('hidden');
+      document.getElementById('pwaInstallHeaderBtn').classList.remove('hidden');
     });
 
-    async function triggerAdminPwaInstall() {
-      if (st.deferredInstall) {
-        st.deferredInstall.prompt();
-        await st.deferredInstall.userChoice;
-        st.deferredInstall = null;
+    async function triggerPwaInstall() {
+      if (app.deferredInstall) {
+        app.deferredInstall.prompt();
+        const choice = await app.deferredInstall.userChoice;
+        if (choice.outcome === 'accepted') {
+          toast('Animedubar berhasil diinstal di HP!', 'vip');
+          document.getElementById('pwaInstallBanner').classList.add('hidden');
+          document.getElementById('pwaInstallHeaderBtn').classList.add('hidden');
+        }
+        app.deferredInstall = null;
         return;
       }
-      toast('Di Chrome Android: ketuk menu (⋮) → "Instal Aplikasi". Di Safari iOS: Share → "Tambahkan ke Layar Utama".', 'info');
+      toast('Di Chrome Android: menu (⋮) → "Instal Aplikasi". Di Safari iOS: Share → "Tambahkan ke Layar Utama".', 'info');
+    }
+
+    function renderAll() {
+      document.getElementById('activeProfileLabel').textContent = app.profile.name;
+      const miniAv = document.getElementById('bottomNavMiniAvatar');
+      if (miniAv) { miniAv.style.background = app.profile.color || '#E50914'; miniAv.textContent = app.profile.badge || 'A'; }
+      const pill = document.getElementById('topVipPill');
+      pill.textContent = hasVip() ? '★ VIP AKTIF' : '★ VIP';
+      pill.className = hasVip()
+        ? 'px-2.5 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/45 text-emerald-300 text-[11px] font-extrabold'
+        : 'px-2.5 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/45 text-amber-300 text-[11px] font-extrabold';
+      updateNotifBadge();
+      renderHome();
+      if (app.tab === 'profile') renderProfileScreen();
     }
 
     window.addEventListener('load', () => {
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
-      document.getElementById('admGasUrl').value = st.gasUrl || '';
-      if (st.session) {
-        document.getElementById('adminLoginGate').classList.add('hidden');
-        if (st.pinHash) document.getElementById('pinLockOverlay').classList.remove('hidden');
-        refreshAdminData(true);
-      }
+      applyDynamicBranding();
+      applyTranslations();
+      renderAll();
+      syncFromBackend(true);
+      startNotificationPoller();
+      setTimeout(() => {
+        const sp = document.getElementById('appSplash');
+        sp.style.opacity = '0';
+        setTimeout(() => {
+          sp.classList.add('hidden');
+          if (!localStorage.getItem('adbr_mob_prof_v6')) {
+            document.getElementById('profileGate').classList.remove('hidden');
+          }
+        }, 420);
+      }, 850);
     });
   </script>
 </body>

@@ -1,21 +1,22 @@
 {
-  "name": "Animedubar CMS \u2014 Admin Master Control",
-  "short_name": "ADBR CMS",
-  "description": "Aplikasi HP resmi & aman khusus Pemilik / Admin untuk mengelola Animedubar (Konten, Google Drive, Voucher VIP, Transaksi, User, Broadcast).",
+  "name": "Animedubar \u2014 Streaming Anime & Film Dub Arab",
+  "short_name": "Animedubar",
+  "description": "Aplikasi resmi Animedubar dengan tampilan 100% Netflix Mobile, Dual Subtitle ID/AR, pembayaran QRIS/TF otomatis, penyimpanan in-app terbatas, dan notifikasi video terbaru.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "display_override": [
     "standalone",
+    "fullscreen",
     "minimal-ui"
   ],
-  "orientation": "portrait-primary",
-  "background_color": "#090b10",
-  "theme_color": "#090b10",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "lang": "id",
   "categories": [
-    "business",
-    "productivity"
+    "entertainment",
+    "video"
   ],
   "icons": [
     {
@@ -29,6 +30,28 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Beranda",
+      "short_name": "Beranda",
+      "url": "./index.html#home"
+    },
+    {
+      "name": "Baru & Populer",
+      "short_name": "Baru",
+      "url": "./index.html#new"
+    },
+    {
+      "name": "Cari Anime",
+      "short_name": "Cari",
+      "url": "./index.html#search"
+    },
+    {
+      "name": "Animedubar Saya",
+      "short_name": "Saya",
+      "url": "./index.html#profile"
     }
   ]
 }
