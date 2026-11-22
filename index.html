@@ -329,8 +329,11 @@
 
       <!-- Video Media Layer (Anti Direct Download) -->
       <div id="nfMediaLayer" class="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
-        <!-- Real Google Drive Embed Layer (if GDrive ID & not HLS) -->
-        <iframe id="plIframe" src="" class="hidden w-full h-full border-0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+        <!-- Real Google Drive Cinema-Clean Layer (Anti-Popout Shield) -->
+        <div id="plIframeWrap" class="hidden absolute inset-0 w-full h-full overflow-hidden bg-black">
+          <iframe id="plIframe" src="" class="w-full h-full border-0 transition-transform duration-300" allow="autoplay; fullscreen" allowfullscreen></iframe>
+          <div class="absolute top-0 right-0 w-24 h-20 z-20 bg-gradient-to-bl from-black via-black/90 to-transparent"></div>
+        </div>
 
         <!-- HTML5 / HLS Video Element (Anti-Download protected) -->
         <video id="plVideo" class="hidden w-full h-full crop-fit bg-black" playsinline crossorigin="anonymous" controlslist="nodownload noplaybackrate" disablepictureinpicture="false"></video>
@@ -1355,10 +1358,25 @@
       app.continueList = [{ itemId, sIdx, eIdx, pct:30 }, ...app.continueList.filter(x => x.itemId !== itemId)].slice(0, 8);
       lsSet('adbr_mob_cw_v6', app.continueList);
 
+      // Auto-load subtitles synced from Panel CMS (subIdText/subArText/subIdUrl/subArUrl)
+      app.player.customSubs = { id: [], ar: [] };
+      if (ep.subIdText) app.player.customSubs.id = parseUniversalSubtitle(ep.subIdText, 'srv_id.srt');
+      if (ep.subArText) app.player.customSubs.ar = parseUniversalSubtitle(ep.subArText, 'srv_ar.srt');
+      if (!app.player.customSubs.id.length && ep.subIdUrl) {
+        fetch(ep.subIdUrl).then(r => r.text()).then(tx => { app.player.customSubs.id = parseUniversalSubtitle(tx, ep.subIdUrl); }).catch(() => {});
+      }
+      if (!app.player.customSubs.ar.length && ep.subArUrl) {
+        fetch(ep.subArUrl).then(r => r.text()).then(tx => { app.player.customSubs.ar = parseUniversalSubtitle(tx, ep.subArUrl); }).catch(() => {});
+      }
+
       document.getElementById('playerSheet').classList.remove('hidden');
       togglePlayerLock(false);
       initPlayerMedia();
       showPlayerHud();
+      // Langsung masuk Full Layar + Landscape persis Netflix
+      const psEl = document.getElementById('playerSheet');
+      if (psEl && !document.fullscreenElement && psEl.requestFullscreen) psEl.requestFullscreen().catch(() => {});
+      if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
     }
 
     function initPlayerMedia() {
@@ -1371,14 +1389,15 @@
       clearInterval(p.demoTimer);
       if (p.hls) { p.hls.destroy(); p.hls = null; }
       const v = document.getElementById('plVideo');
+      const ifrWrap = document.getElementById('plIframeWrap');
       const ifr = document.getElementById('plIframe');
       const demo = document.getElementById('plDemoBackdrop');
       v.pause(); v.classList.add('hidden');
-      ifr.src = ''; ifr.classList.add('hidden');
+      ifr.src = ''; if (ifrWrap) ifrWrap.classList.add('hidden');
       demo.classList.add('hidden');
 
       const fileId = extractDriveId(ep[p.server] || ep.driveSubId);
-      const isDemo = !fileId || /^DEMO_/i.test(fileId);
+      const isDemo = !fileId || /^DEMO_|^DIRECT_STREAM$/i.test(fileId);
 
       if ((p.sourceMode === 'hls' || (ep.hlsUrl && p.sourceMode === 'auto')) && ep.hlsUrl) {
         v.classList.remove('hidden');
@@ -1402,7 +1421,7 @@
         };
         v.onended = () => playNextEp();
       } else if (!isDemo && p.sourceMode !== 'demo') {
-        ifr.classList.remove('hidden');
+        if (ifrWrap) ifrWrap.classList.remove('hidden');
         ifr.src = `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
       } else {
         demo.classList.remove('hidden');
@@ -1532,6 +1551,7 @@
       v.classList.remove('crop-fit', 'crop-zoom', 'crop-fill');
       v.classList.add(mode.cls);
       document.getElementById('nfCropLabel').textContent = mode.label.split(' ')[0];
+      const ifrEl = document.getElementById('plIframe'); if (ifrEl) ifrEl.style.transform = app.player.cropIdx === 1 ? 'scale(1.12)' : 'scale(1)';
     }
 
     function togglePlayerLock(lock) {
@@ -1918,7 +1938,7 @@
           const epMap = new Map();
           (data.episodes || []).forEach(e => {
             if (!epMap.has(e.contentId)) epMap.set(e.contentId, []);
-            epMap.get(e.contentId).push({ ep: Number(e.epNumber||1), title: e.title||'Episode', duration: e.duration||'24 mnt', isVip: String(e.isVip).toUpperCase()==='TRUE', driveSubId: e.gdriveSubId||'DEMO', driveSubAr: e.gdriveSubAr||e.gdriveSubId||'DEMO', driveDual: e.gdriveDualSub||e.gdriveSubId||'DEMO', hlsUrl: e.hlsUrl||'' });
+            epMap.get(e.contentId).push({ ep: Number(e.epNumber||1), title: e.title||'Episode', duration: e.duration||'24 mnt', isVip: String(e.isVip).toUpperCase()==='TRUE', driveSubId: e.gdriveSubId||'DEMO', driveSubAr: e.gdriveSubAr||e.gdriveSubId||'DEMO', driveDual: e.gdriveDualSub||e.gdriveSubId||'DEMO', hlsUrl: e.hlsUrl||'', videoSourceType: e.videoSourceType||'', subIdUrl: e.subIdUrl||'', subArUrl: e.subArUrl||'', subIdText: e.subIdText||'', subArText: e.subArText||'' });
           });
           app.config.catalog = data.catalog.map((c, idx) => ({
             id: c.id || ('cat-' + idx), title: c.title, arabicTitle: c.titleAr || 'مدبلج عربي',
